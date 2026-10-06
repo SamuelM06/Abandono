@@ -59,8 +59,8 @@ export default function TrendChart({ data }) {
           <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-full bg-red-500" /> Abandono</span>
         </div>
       </div>
-      <div ref={wrapRef} className="px-3 pt-1 pb-2 overflow-x-auto relative" onMouseMove={onMove} onMouseLeave={() => setHover(null)}>
-        <svg viewBox={`0 0 ${W} ${H}`} className="w-full min-w-[520px]" role="img" aria-label="Tendencia acumulada con barras y lineas">
+      <div ref={wrapRef} className="px-3 pt-1 pb-2 relative" onMouseMove={onMove} onMouseLeave={() => setHover(null)}>
+        <svg viewBox={`0 0 ${W} ${H}`} className="w-full" role="img" aria-label="Tendencia acumulada con barras y lineas">
           {[0.25, 0.5, 0.75, 1].map((f) => (
             <g key={f}>
               <line x1={PAD_L} x2={W - 12} y1={y(max * f)} y2={y(max * f)} stroke="currentColor" className="text-gray-200 dark:text-slate-700" strokeDasharray="4 4" />
@@ -102,26 +102,32 @@ export default function TrendChart({ data }) {
             <line x1={x(hover.i)} x2={x(hover.i)} y1={PAD_T} y2={H - PAD_B} stroke="#5AE280" strokeWidth="1.5" strokeDasharray="3 3" />
           )}
         </svg>
-        {hp && (
-          <div
-            className="absolute z-20 pointer-events-none bg-[#131a30] dark:bg-black text-white rounded-xl shadow-2xl border border-xuma-green-dark/40 px-4 py-3 font-raleway text-xs min-w-[210px]"
-            style={{
-              left: Math.min(Math.max(hover.px + 14, 8), (wrapRef.current?.clientWidth || 300) - 225),
-              top: Math.max(hover.py - 40, 8),
-            }}
-          >
-            <p className="font-bold text-sm text-xuma-green-light mb-1.5">{hp.hora} — detalle</p>
-            <div className="space-y-1">
-              <p>📞 Hora: <strong>{hp.hTotal}</strong> (abandono {hpAbPct}%)</p>
-              <p>✅ Atendidas hora: <strong>{hp.hOk}</strong></p>
-              <p>❌ Abandono hora: <strong>{hp.hAb}</strong></p>
-              <hr className="border-white/15 !my-1.5" />
-              <p>📊 Acumulado: <strong>{hp.total}</strong></p>
-              <p>✅ Acum. atendidas: <strong>{hp.atendidas}</strong></p>
-              <p>❌ Acum. abandono: <strong>{hp.abandono}</strong></p>
+        {hp && (() => {
+          const boxW = wrapRef.current?.clientWidth || 300;
+          const tipW = 225;
+          // Si el punto está en la mitad derecha, el tooltip sale a la izquierda (nunca genera scroll).
+          const toLeft = hover.px > boxW / 2;
+          return (
+            <div
+              className="absolute z-20 pointer-events-none rounded-2xl px-4 py-3 font-raleway text-xs min-w-[215px] bg-white text-xuma-gray border border-xuma-blue/20 shadow-[0_16px_40px_-12px_rgba(18,1,128,0.35)] dark:bg-[#131a30] dark:text-white dark:border-white/15 dark:shadow-[0_16px_40px_-12px_rgba(0,0,0,0.8)]"
+              style={{
+                left: toLeft ? Math.max(hover.px - tipW - 14, 8) : Math.min(hover.px + 14, Math.max(8, boxW - tipW - 8)),
+                top: Math.max(Math.min(hover.py - 50, 110), 8),
+              }}
+            >
+              <p className="font-bold text-sm text-xuma-blue dark:text-xuma-green-light mb-1.5">{hp.hora} — detalle</p>
+              <div className="space-y-1">
+                <p>📞 Hora: <strong>{hp.hTotal}</strong> (abandono {hpAbPct}%)</p>
+                <p>✅ Atendidas hora: <strong>{hp.hOk}</strong></p>
+                <p>❌ Abandono hora: <strong>{hp.hAb}</strong></p>
+                <hr className="border-gray-200 dark:border-white/15 !my-1.5" />
+                <p>📊 Acumulado: <strong>{hp.total}</strong></p>
+                <p>✅ Acum. atendidas: <strong>{hp.atendidas}</strong></p>
+                <p>❌ Acum. abandono: <strong>{hp.abandono}</strong></p>
+              </div>
             </div>
-          </div>
-        )}
+          );
+        })()}
       </div>
     </div>
   );
