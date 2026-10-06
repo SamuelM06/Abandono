@@ -1,0 +1,57 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: abandono-xuma-backend
+    ports:
+      - "8000:8000"
+    environment:
+      - DB_HOST=${DB_HOST}
+      - DB_PORT=${DB_PORT:-5432}
+      - DB_NAME=${DB_NAME}
+      - DB_USER=${DB_USER}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - DB_SCHEMA=${DB_SCHEMA:-ocm_retencion}
+      - SMTP_HOST=${SMTP_HOST}
+      - SMTP_PORT=${SMTP_PORT:-587}
+      - SMTP_USER=${SMTP_USER}
+      - SMTP_PASSWORD=${SMTP_PASSWORD}
+      - EMAIL_FROM=${EMAIL_FROM}
+      - EMAIL_TO_JEFA=${EMAIL_TO_JEFA}
+      - EMAIL_TO_COORD=${EMAIL_TO_COORD}
+      - EMAIL_SIGNATURE_NOMBRE=${EMAIL_SIGNATURE_NOMBRE}
+      - EMAIL_SIGNATURE_CARGO=${EMAIL_SIGNATURE_CARGO}
+      - EMAIL_SIGNATURE_EMAIL=${EMAIL_SIGNATURE_EMAIL}
+      - EMAIL_SIGNATURE_TELEFONO=${EMAIL_SIGNATURE_TELEFONO}
+      - EMAIL_SIGNATURE_WEB=${EMAIL_SIGNATURE_WEB}
+      - APP_HOST=0.0.0.0
+      - APP_PORT=8000
+      - FRONTEND_URL=http://localhost
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - abandono-network
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: abandono-xuma-frontend
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    restart: unless-stopped
+    networks:
+      - abandono-network
+
+networks:
+  abandono-network:
+    driver: bridge

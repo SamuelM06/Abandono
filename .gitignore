@@ -1,0 +1,27 @@
+# Entorno local con secretos (NO versionar)
+backend/.env
+.env
+.env.local
+.env.production
+
+# Reportes generados
+*.xlsx
+*.csv
+
+# Logs
+*.log
+logs/
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Node / build
+frontend/node_modules/
+frontend/dist/
+
+# OS
+.DS_Store
+Thumbs.db
