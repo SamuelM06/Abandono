@@ -1,14 +1,16 @@
 from datetime import datetime, date, time
 from typing import Optional
-from fastapi import APIRouter, Query, HTTPException
+from fastapi import APIRouter, Query, HTTPException, Request
 from fastapi.responses import StreamingResponse
 from app.schemas import (
-    KPIDashboard, CallsResponse, TimeRange, ExportRequest, TIME_RANGE_LABELS
+    KPIDashboard, CallsResponse, TimeRange, ExportRequest, TIME_RANGE_LABELS, FilterOptions
 )
 from app.services import (
     get_kpis_for_date, get_kpis_for_datetime_range,
-    get_calls_detail, get_calls_for_export, get_hourly_stats as svc_get_hourly_stats
+    get_calls_detail, get_calls_for_export, get_hourly_stats as svc_get_hourly_stats,
+    get_filter_options
 )
+from app.database import get_settings
 from app.excel_export import generate_excel_report
 from app.email_service import (
     send_daily_report_email, test_email_connection, build_daily_report_context
@@ -185,3 +187,25 @@ async def test_email():
 @router.get("/health")
 async def health_check():
     return {"status": "ok", "timestamp": datetime.now().isoformat()}
+
+
+@router.get("/ui-config")
+async def ui_config(request: Request):
+    """Dice al front si este visitante es el owner (ve acciones de correo) o invitado (solo lectura).
+
+    Compara la IP del visitante con OWNER_IPS del .env local.
+    """
+    owners = [ip.strip() for ip in (get_settings().owner_ips or "").split(",") if ip.strip()]
+    client_ip = (request.client.host if request.client else "") or ""
+    is_owner = any(client_ip == o or client_ip.startswith(o) for o in owners) if owners else True
+    return {"is_owner": is_owner}
+
+
+@router.get("/filtros", response_model=FilterOptions)
+async def get_filtros(
+    fecha: Optional[str] = Query(None, description="Fecha YYYY-MM-DD"),
+    skill: str = Query("In_Contingencias"),
+    time_range: Optional[TimeRange] = Query(None, description="medio_dia, dia_completo, fuera_horario"),
+):
+    target_date = datetime.strptime(fecha, "%Y-%m-%d").date() if fecha else date.today()
+    return get_filter_options(target_date, skill, time_range)

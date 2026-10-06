@@ -5,6 +5,11 @@ import Pagination from './Pagination';
 const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:8000/api';
 const PAGE_SIZE = 10;
 
+const todayStr = () => {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+};
+
 const FilterIcon = () => (
   <svg className="w-5 h-5 text-xuma-green-dark" fill="none" stroke="currentColor" viewBox="0 0 24 24">
     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
@@ -23,9 +28,18 @@ export default function DetailView() {
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
   const [timeRange, setTimeRange] = useState('dia_completo');
-  const [fecha, setFecha] = useState(() => new Date().toISOString().split('T')[0]);
+  const [fecha, setFecha] = useState(todayStr);
   const [sortConfig, setSortConfig] = useState({ key: 'fecha', direction: 'desc' });
   const [filters, setFilters] = useState({ agent: '', result: '' });
+  const [options, setOptions] = useState({ asesores: [], resultados: [] });
+
+  // Items reales desde BD para los selects (se recargan con fecha/rango).
+  useEffect(() => {
+    fetch(`${API_BASE}/filtros?fecha=${fecha}&time_range=${timeRange}&skill=In_Contingencias`)
+      .then((r) => r.json())
+      .then((d) => setOptions({ asesores: d.asesores || [], resultados: d.resultados || [] }))
+      .catch(() => setOptions({ asesores: [], resultados: [] }));
+  }, [fecha, timeRange]);
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -55,6 +69,19 @@ export default function DetailView() {
     fetchData();
   }, [fetchData]);
 
+  const goToday = () => {
+    setFecha(todayStr());
+    setPage(1);
+  };
+
+  const weekday = (() => {
+    try {
+      return new Date(`${fecha}T12:00:00`).toLocaleDateString('es-CO', { weekday: 'long' });
+    } catch {
+      return '';
+    }
+  })();
+
   const handleSort = (key) => {
     setSortConfig(prev => ({
       key,
@@ -68,10 +95,10 @@ export default function DetailView() {
     return 0;
   });
 
+  // El backend ya filtra por fecha/rango; los selects filtran en cliente.
   const filteredCalls = sortedCalls.filter(call => {
-    const q = filters.agent.toLowerCase();
-    const agentMatch = !q || (call.agent && call.agent.includes(filters.agent)) || (call.asesor && call.asesor.toLowerCase().includes(q));
-    const resultMatch = !filters.result || (call.resultcalldesc && call.resultcalldesc.toLowerCase().includes(filters.result.toLowerCase())) || (call.resultdesc && call.resultdesc.toLowerCase().includes(filters.result.toLowerCase()));
+    const agentMatch = !filters.agent || call.agent === filters.agent;
+    const resultMatch = !filters.result || call.resultdesc === filters.result;
     return agentMatch && resultMatch;
   });
 
@@ -102,46 +129,49 @@ export default function DetailView() {
   };
 
   const columns = [
-    { key: 'fecha', label: 'Fecha', render: (c) => new Date(c.fecha).toLocaleDateString('es-CO') },
-    { key: 'hora', label: 'Hora', render: (c) => new Date(c.fecha).toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit', second: '2-digit' }) },
-    { key: 'asesor', label: 'Nombre asesor', render: (c) => c.asesor || '—' },
-    { key: 'agent', label: 'Agente', render: (c) => c.agent || '—' },
-    { key: 'extension', label: 'Extensión', render: (c) => c.extension || '—' },
+    { key: 'fecha', label: 'Fecha', render: (c) => new Date(c.fecha).toLocaleDateString('es-CO', { day: '2-digit', month: '2-digit' }) },
+    { key: 'hora', label: 'Hora', render: (c) => new Date(c.fecha).toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' }) },
+    { key: 'asesor', label: 'Nombre asesor', render: (c) => c.asesor || '—', wrap: true },
+    { key: 'agent', label: 'Documento', render: (c) => c.agent || '—' },
     { key: 'resultcall', label: 'Resultado', render: getResultBadge },
-    { key: 'resultdesc', label: 'Detalle', render: (c) => c.resultdesc || '—' },
-    { key: 'timecall', label: 'Duración (s)', render: (c) => c.timecall ? c.timecall.toFixed(1) : '—' },
-    { key: 'timequeue', label: 'Cola (s)', render: (c) => c.timequeue ? c.timequeue.toFixed(1) : '—' },
+    { key: 'resultdesc', label: 'Detalle', render: (c) => c.resultdesc || '—', wrap: true },
+    { key: 'timecall', label: 'Dur (s)', render: (c) => c.timecall ? c.timecall.toFixed(0) : '—' },
+    { key: 'timequeue', label: 'Cola (s)', render: (c) => c.timequeue ? c.timequeue.toFixed(0) : '—' },
     { key: 'numbercall', label: 'Número', render: (c) => c.numbercall || '—' },
   ];
 
   return (
-    <div className="space-y-6 animate-slide-in">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+    <div className="space-y-4 animate-slide-in">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
-          <h2 className="font-raleway font-bold text-2xl text-xuma-gray dark:text-white">Detalle de llamadas</h2>
-          <p className="font-raleway text-gray-500 dark:text-slate-400 mt-1">
-            Skill: <span className="font-medium text-xuma-blue dark:text-xuma-green-light">In_Contingencias</span> |{" "}
-            Total: <span className="font-bold text-xuma-gray dark:text-white">{formatNumber(total)}</span> registros
+          <h2 className="font-raleway font-bold text-xl text-xuma-gray dark:text-white">Detalle de llamadas</h2>
+          <p className="font-raleway text-sm text-gray-500 dark:text-slate-400 mt-0.5 capitalize">
+            {weekday} · Total: <span className="font-bold text-xuma-gray dark:text-white">{formatNumber(total)}</span> registros
           </p>
         </div>
         <ExportButton fecha={fecha} timeRange={timeRange} />
       </div>
 
       <div className="card">
-        <div className="card-header">
-          <h3 className="font-raleway font-bold text-xuma-gray dark:text-white flex items-center gap-2">
+        <div className="card-header !py-3">
+          <h3 className="font-raleway font-bold text-xuma-gray dark:text-white flex items-center gap-2 text-[15px]">
             <FilterIcon /> Filtros de búsqueda
           </h3>
         </div>
-        <div className="p-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="p-4 grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-5 gap-3 items-end">
           <label className="flex flex-col gap-1.5">
             <span className="font-raleway text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-slate-400">📅 Fecha</span>
-            <input
-              type="date"
-              value={fecha}
-              onChange={(e) => { setFecha(e.target.value); setPage(1); }}
-              className="input-field"
-            />
+            <div className="flex gap-2">
+              <input
+                type="date"
+                value={fecha}
+                onChange={(e) => { setFecha(e.target.value); setPage(1); }}
+                className="input-field"
+              />
+              <button onClick={goToday} className="btn-preview !px-3 shrink-0" title="Filtrar automáticamente los registros de hoy">
+                Hoy
+              </button>
+            </div>
           </label>
           <label className="flex flex-col gap-1.5">
             <span className="font-raleway text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-slate-400">⏰ Rango horario</span>
@@ -156,52 +186,64 @@ export default function DetailView() {
             </select>
           </label>
           <label className="flex flex-col gap-1.5">
-            <span className="font-raleway text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-slate-400">🧑 Asesor / agente</span>
-            <input
-              type="text"
-              placeholder="Nombre o documento..."
+            <span className="font-raleway text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-slate-400">🧑 Asesor</span>
+            <select
               value={filters.agent}
               onChange={(e) => setFilters(prev => ({ ...prev, agent: e.target.value }))}
-              className="input-field"
-            />
+              className="select-field"
+            >
+              <option value="">Todos los asesores</option>
+              {options.asesores.map((a) => (
+                <option key={a.agent} value={a.agent}>{a.asesor}</option>
+              ))}
+            </select>
           </label>
           <label className="flex flex-col gap-1.5">
             <span className="font-raleway text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-slate-400">📞 Resultado</span>
-            <input
-              type="text"
-              placeholder="Abandono, contacto..."
+            <select
               value={filters.result}
               onChange={(e) => setFilters(prev => ({ ...prev, result: e.target.value }))}
-              className="input-field"
-            />
+              className="select-field"
+            >
+              <option value="">Todos los resultados</option>
+              {options.resultados.map((r) => (
+                <option key={r} value={r}>{r}</option>
+              ))}
+            </select>
           </label>
+          <div className="flex flex-col gap-1.5">
+            <span className="font-raleway text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-slate-400">📋 Vista</span>
+            <div className="input-field !bg-gray-50 dark:!bg-slate-800/60 text-center font-semibold">
+              {PAGE_SIZE} por página
+            </div>
+          </div>
         </div>
       </div>
 
       <div className="card">
-        <div className="card-header flex items-center justify-between">
-          <h3 className="font-raleway font-bold text-xuma-gray dark:text-white flex items-center gap-2">
-            <TableIcon /> Registros
+        <div className="card-header !py-3 flex items-center justify-between">
+          <h3 className="font-raleway font-bold text-xuma-gray dark:text-white flex items-center gap-2 text-[15px]">
+            <TableIcon /> Registros de hoy
           </h3>
           <span className="font-raleway text-xs text-gray-500 dark:text-slate-400">
-            Página {page} de {Math.max(1, Math.ceil(total / PAGE_SIZE))} · {PAGE_SIZE} por página
+            Página {page} de {Math.max(1, Math.ceil(total / PAGE_SIZE))}
           </span>
         </div>
 
-        <div className="table-container">
-          <table className="data-table text-center">
+        <div className="overflow-x-hidden">
+          <table className="data-table text-center w-full">
             <thead>
               <tr>
                 {columns.map((col) => (
                   <th
                     key={col.key}
                     onClick={() => handleSort(col.key)}
-                    className="cursor-pointer select-none text-center whitespace-nowrap"
+                    className="cursor-pointer select-none !text-center whitespace-nowrap !px-2 !py-2.5 !text-xs"
                   >
                     <div className="flex items-center justify-center gap-1">
                       {col.label}
                       {sortConfig.key === col.key && (
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={sortConfig.direction === 'asc' ? 'M5 15l7-7 7 7' : 'M19 9l-7 7-7-7'} />
                         </svg>
                       )}
@@ -213,23 +255,23 @@ export default function DetailView() {
             <tbody>
               {loading ? (
                 <tr>
-                  <td colSpan={columns.length} className="text-center py-12">
+                  <td colSpan={columns.length} className="text-center py-10">
                     <div className="flex flex-col items-center gap-3">
                       <svg className="animate-spin w-8 h-8 text-xuma-green-dark" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                       </svg>
-                      <p className="font-raleway text-gray-500 dark:text-slate-400">Cargando llamadas...</p>
+                      <p className="font-raleway text-gray-500 dark:text-slate-400 text-sm">Cargando llamadas...</p>
                     </div>
                   </td>
                 </tr>
               ) : filteredCalls.length === 0 ? (
                 <tr>
-                  <td colSpan={columns.length} className="text-center py-12">
+                  <td colSpan={columns.length} className="text-center py-10">
                     <div className="flex flex-col items-center gap-3">
                       <svg className="w-12 h-12 text-gray-300 dark:text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                       </svg>
-                      <p className="font-raleway text-gray-500 dark:text-slate-400">No se encontraron llamadas con los filtros actuales</p>
+                      <p className="font-raleway text-gray-500 dark:text-slate-400 text-sm">No se encontraron llamadas con los filtros actuales</p>
                     </div>
                   </td>
                 </tr>
@@ -237,7 +279,7 @@ export default function DetailView() {
                 filteredCalls.map((call) => (
                   <tr key={call.idlog_calls} className={call.resultcall === '10164' ? 'bg-red-50 dark:bg-red-950/30' : ''}>
                     {columns.map((col) => (
-                      <td key={col.key} className="text-center whitespace-nowrap">
+                      <td key={col.key} className={`text-center !px-2 !py-2 !text-xs ${col.wrap ? 'whitespace-normal min-w-[140px]' : 'whitespace-nowrap'}`}>
                         {col.render(call)}
                       </td>
                     ))}
@@ -248,7 +290,7 @@ export default function DetailView() {
           </table>
         </div>
 
-        <div className="px-6 py-4 border-t border-gray-100 dark:border-slate-700">
+        <div className="px-6 py-3 border-t border-gray-100 dark:border-slate-700">
           <Pagination
             currentPage={page}
             totalPages={Math.max(1, Math.ceil(total / PAGE_SIZE))}

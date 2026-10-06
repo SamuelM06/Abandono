@@ -95,6 +95,55 @@
   ring-offset: 2px;
 }
 
+/* Botones de accion principales (alta visibilidad en ambos temas) */
+.btn-export {
+  background: linear-gradient(135deg, #120180 0%, #2b1bff 100%);
+  color: white;
+  padding: 0.625rem 1.1rem;
+  border-radius: 0.65rem;
+  font-family: var(--font-raleway);
+  font-weight: 700;
+  font-size: 0.85rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  box-shadow: 0 6px 18px -6px rgba(18,1,128,0.6);
+  transition: transform 0.15s, box-shadow 0.2s;
+  border: 1px solid rgba(255,255,255,0.25);
+}
+
+.btn-export:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 10px 24px -6px rgba(18,1,128,0.7);
+}
+
+.btn-preview {
+  background: linear-gradient(135deg, #007a57 0%, #00CD93 100%);
+  color: white;
+  padding: 0.625rem 1.1rem;
+  border-radius: 0.65rem;
+  font-family: var(--font-raleway);
+  font-weight: 700;
+  font-size: 0.85rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  box-shadow: 0 6px 18px -6px rgba(0,205,147,0.6);
+  transition: transform 0.15s, box-shadow 0.2s;
+  border: 1px solid rgba(255,255,255,0.25);
+}
+
+.btn-preview:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 10px 24px -6px rgba(0,205,147,0.7);
+}
+
+.btn-export:disabled, .btn-preview:disabled {
+  opacity: 0.6;
+  cursor: wait;
+  transform: none;
+}
+
 /* Card styles */
 .card {
   background-color: white;

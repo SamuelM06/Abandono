@@ -32,6 +32,10 @@ class Settings(BaseSettings):
     email_signature_direccion: str = ""
     email_signature_web: str = ""
 
+    # IPs del equipo owner (separadas por coma): solo estas ven acciones de correo en el front.
+    # El resto (jefa/otros con el link) ve el dashboard en vivo pero sin boton de correo.
+    owner_ips: str = ""
+
     # App
     app_host: str = "0.0.0.0"
     app_port: int = 8000

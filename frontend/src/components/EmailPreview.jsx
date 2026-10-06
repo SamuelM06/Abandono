@@ -25,7 +25,10 @@ export default function EmailPreview({ fecha }) {
 
   return (
     <>
-      <button onClick={loadPreview} disabled={loading} className="btn-outline" title="Ver cómo llegará el correo de las 17:00 sin enviarlo">
+      <button onClick={loadPreview} disabled={loading} className="btn-preview" title="Ver cómo llegará el correo de las 17:00 sin enviarlo">
+        <svg className="w-4 h-4 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+        </svg>
         {loading ? 'Cargando...' : 'Vista previa correo'}
       </button>
       {error && <span className="font-raleway text-sm text-red-600">{error}</span>}

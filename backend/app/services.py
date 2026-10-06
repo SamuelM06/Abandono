@@ -31,6 +31,19 @@ def build_time_filter(time_range: Optional[TimeRange]) -> Tuple[str, list]:
     return " AND fecha::time >= %s AND fecha::time <= %s", [start_time, end_time]
 
 
+def _with_dedup(base: dict) -> dict:
+    # Unicos = numeros distintos (no vacios) + filas sin numero (no se pueden deduplicar).
+    # Duplicados = resto: llamadas repetidas del mismo numero (solo cuenta el primer registro).
+    base["total_duplicados"] = max(0, (base["total_ingresadas"] or 0) - (base["total_unicos"] or 0))
+    return base
+
+
+DEDUP_SELECT = """
+    COUNT(DISTINCT NULLIF(TRIM(numbercall), '')) as numeros_distintos,
+    COUNT(*) FILTER (WHERE NULLIF(TRIM(numbercall), '') IS NULL) as sin_numero
+"""
+
+
 def get_kpis_for_date(
     target_date: date,
     skill: str = SKILL_CONTINGENCIA,
@@ -42,7 +55,8 @@ def get_kpis_for_date(
             SELECT
                 COUNT(*) as total_ingresadas,
                 COUNT(*) FILTER (WHERE resultcall = %s) as total_abandono,
-                COUNT(*) FILTER (WHERE resultcall = %s) as total_atendidas
+                COUNT(*) FILTER (WHERE resultcall = %s) as total_atendidas,
+                {DEDUP_SELECT}
             FROM {get_schema()}.log_calls
             WHERE fecha::date = %s
             AND skill = %s
@@ -51,11 +65,12 @@ def get_kpis_for_date(
         """
         cur.execute(query, (ABANDONED_RESULTCALL, ANSWERED_RESULTCALL, target_date, skill, IN_CALL_TYPE, *time_params))
         row = cur.fetchone()
-        return {
+        return _with_dedup({
             "total_ingresadas": row[0] or 0,
             "total_abandono": row[1] or 0,
             "total_atendidas": row[2] or 0,
-        }
+            "total_unicos": (row[3] or 0) + (row[4] or 0),
+        })
 
 
 def get_kpis_for_datetime_range(
@@ -68,7 +83,8 @@ def get_kpis_for_datetime_range(
             SELECT
                 COUNT(*) as total_ingresadas,
                 COUNT(*) FILTER (WHERE resultcall = %s) as total_abandono,
-                COUNT(*) FILTER (WHERE resultcall = %s) as total_atendidas
+                COUNT(*) FILTER (WHERE resultcall = %s) as total_atendidas,
+                {DEDUP_SELECT}
             FROM {get_schema()}.log_calls
             WHERE fecha >= %s AND fecha <= %s
             AND skill = %s
@@ -76,11 +92,12 @@ def get_kpis_for_datetime_range(
         """
         cur.execute(query, (ABANDONED_RESULTCALL, ANSWERED_RESULTCALL, fecha_inicio, fecha_fin, skill, IN_CALL_TYPE))
         row = cur.fetchone()
-        return {
+        return _with_dedup({
             "total_ingresadas": row[0] or 0,
             "total_abandono": row[1] or 0,
             "total_atendidas": row[2] or 0,
-        }
+            "total_unicos": (row[3] or 0) + (row[4] or 0),
+        })
 
 
 def get_calls_detail(
@@ -152,6 +169,43 @@ def get_calls_for_export(
 ) -> List[CallDetail]:
     calls, _ = get_calls_detail(fecha_inicio, fecha_fin, skill, time_range, 1, 100000)
     return calls
+
+
+def get_filter_options(
+    target_date: date,
+    skill: str = SKILL_CONTINGENCIA,
+    time_range: Optional[TimeRange] = None,
+) -> dict:
+    """Items reales desde BD para los selects de Detalle (asesores y resultados)."""
+    time_filter, time_params = build_time_filter(time_range)
+    with get_db_cursor() as cur:
+        cur.execute(
+            f"""
+            SELECT DISTINCT lc.agent, COALESCE(NULLIF(TRIM(a.nombre), ''), lc.agent) as asesor
+            FROM {get_schema()}.log_calls lc
+            LEFT JOIN {get_schema()}.agent a ON a."user" = lc.agent
+            WHERE lc.fecha::date = %s AND lc.skill = %s AND lc.typecall = %s
+            AND NULLIF(TRIM(lc.agent), '') IS NOT NULL
+            {time_filter.replace('fecha::', 'lc.fecha::')}
+            ORDER BY asesor
+            """,
+            (target_date, skill, IN_CALL_TYPE, *time_params),
+        )
+        asesores = [{"agent": r[0], "asesor": (r[1] or "").strip()} for r in cur.fetchall()]
+
+        cur.execute(
+            f"""
+            SELECT DISTINCT resultdesc
+            FROM {get_schema()}.log_calls
+            WHERE fecha::date = %s AND skill = %s AND typecall = %s
+            AND NULLIF(TRIM(resultdesc), '') IS NOT NULL
+            {time_filter}
+            ORDER BY resultdesc
+            """,
+            (target_date, skill, IN_CALL_TYPE, *time_params),
+        )
+        resultados = [r[0] for r in cur.fetchall()]
+        return {"asesores": asesores, "resultados": resultados}
 
 
 def get_hourly_stats(

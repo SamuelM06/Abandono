@@ -14,9 +14,21 @@ class KPIDashboard(BaseModel):
     total_ingresadas: int
     total_abandono: int
     total_atendidas: int
+    total_unicos: int = 0
+    total_duplicados: int = 0
     fecha: str
     hora_actualizacion: str
     skill: str = "In_Contingencias"
+
+
+class AsesorOption(BaseModel):
+    agent: str
+    asesor: str
+
+
+class FilterOptions(BaseModel):
+    asesores: List[AsesorOption]
+    resultados: List[str]
 
 
 class CallDetail(BaseModel):

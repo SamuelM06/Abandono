@@ -71,21 +71,33 @@ def create_kpi_sheet(wb: Workbook, kpis: dict, fecha: date, skill: str):
                 ws.cell(row=r, column=c).border = thin_border
                 ws.cell(row=r, column=c).fill = PatternFill(start_color=LIGHT_GRAY, end_color=LIGHT_GRAY, fill_type="solid")
 
-    row = 8
-    ws.merge_cells("A8:F8")
-    ws["A8"] = "DETALLE POR HORA"
-    ws["A8"].font = Font(name="Raleway", bold=True, size=14, color=XUMA_BLUE)
+    row = 7
+    extra = [
+        ("TOTAL ÚNICOS (primer registro por número)", kpis.get("total_unicos", 0), XUMA_BLUE),
+        ("TOTAL DUPLICADOS (rellamadas mismo número)", kpis.get("total_duplicados", 0), "E65100"),
+    ]
+    for i, (label, value, color) in enumerate(extra):
+        col = i * 3 + 1
+        ws.merge_cells(start_row=row, start_column=col, end_row=row, end_column=col + 2)
+        cell = ws.cell(row=row, column=col, value=f"{label}: {value}")
+        cell.font = Font(name="Raleway", bold=True, size=11, color=color)
+        cell.alignment = Alignment(horizontal="center")
+
+    row = 9
+    ws.merge_cells("A9:F9")
+    ws["A9"] = "DETALLE POR HORA"
+    ws["A9"].font = Font(name="Raleway", bold=True, size=14, color=XUMA_BLUE)
 
     headers = ["HORA", "TOTAL INGRESADAS", "ABANDONO", "ATENDIDAS", "% ABANDONO", "% ATENDIDAS"]
     for col_idx, header in enumerate(headers, 1):
-        cell = ws.cell(row=9, column=col_idx, value=header)
+        cell = ws.cell(row=10, column=col_idx, value=header)
         cell.font = header_font
         cell.fill = header_fill
         cell.alignment = Alignment(horizontal="center", wrap_text=True)
         cell.border = thin_border
 
     hourly = get_hourly_stats(fecha, skill)
-    for row_idx, h in enumerate(hourly, 10):
+    for row_idx, h in enumerate(hourly, 11):
         ws.cell(row=row_idx, column=1, value=h["hora"]).font = normal_font
         ws.cell(row=row_idx, column=2, value=h["total"]).font = normal_font
         ws.cell(row=row_idx, column=3, value=h["abandono"]).font = Font(name="Raleway", size=11, color="C62828")
@@ -110,7 +122,7 @@ def create_kpi_sheet(wb: Workbook, kpis: dict, fecha: date, skill: str):
             if row_idx % 2 == 0:
                 ws.cell(row=row_idx, column=col_idx).fill = PatternFill(start_color=LIGHT_BLUE, end_color=LIGHT_BLUE, fill_type="solid")
 
-    totals_row = 10 + len(hourly)
+    totals_row = 11 + len(hourly)
     ws.cell(row=totals_row, column=1, value="TOTAL").font = Font(name="Raleway", bold=True, size=11, color=WHITE)
     ws.cell(row=totals_row, column=1).fill = PatternFill(start_color=XUMA_GRAY, end_color=XUMA_GRAY, fill_type="solid")
     for col_idx in range(2, 7):

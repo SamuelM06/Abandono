@@ -10,25 +10,37 @@ const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:8000/api';
 const REFRESH_SECONDS = 60;
 
 const PhoneIcon = () => (
-  <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
   </svg>
 );
 
 const AlertIcon = () => (
-  <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
   </svg>
 );
 
 const CheckIcon = () => (
-  <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
   </svg>
 );
 
+const UsersIcon = () => (
+  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+  </svg>
+);
+
+const CopyIcon = () => (
+  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+  </svg>
+);
+
 const RefreshIcon = ({ spinning }) => (
-  <svg className={`w-5 h-5 inline mr-1 ${spinning ? 'animate-spin' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+  <svg className={`w-4 h-4 inline mr-1 ${spinning ? 'animate-spin' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
   </svg>
 );
@@ -38,13 +50,20 @@ export default function Dashboard({ onUpdate }) {
     total_ingresadas: 0,
     total_abandono: 0,
     total_atendidas: 0,
+    total_unicos: 0,
+    total_duplicados: 0,
   });
   const [hourlyData, setHourlyData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [timeRange, setTimeRange] = useState('dia_completo');
   const [fecha, setFecha] = useState(() => new Date().toISOString().split('T')[0]);
   const [countdown, setCountdown] = useState(REFRESH_SECONDS);
+  const [isOwner, setIsOwner] = useState(true);
   const timer = useRef(null);
+
+  useEffect(() => {
+    fetch(`${API_BASE}/ui-config`).then((r) => r.json()).then((d) => setIsOwner(!!d.is_owner)).catch(() => setIsOwner(true));
+  }, []);
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -97,31 +116,30 @@ export default function Dashboard({ onUpdate }) {
 
   const formatNumber = (num) => new Intl.NumberFormat('es-CO').format(num);
   const total = kpis.total_ingresadas || 0;
-  const abandonoPct = total > 0 ? (kpis.total_abandono / total) * 100 : 0;
-  const atendidasPct = total > 0 ? (kpis.total_atendidas / total) * 100 : 0;
+  const pct = (v) => (total > 0 ? ((v / total) * 100).toFixed(1) : '0.0');
 
   return (
-    <div className="space-y-6 animate-slide-in">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+    <div className="space-y-4 animate-slide-in">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
-          <h2 className="font-raleway font-bold text-2xl text-xuma-gray dark:text-white">Dashboard Contingencia</h2>
-          <p className="font-raleway text-gray-500 dark:text-slate-400 mt-1">
+          <h2 className="font-raleway font-bold text-xl text-xuma-gray dark:text-white">Dashboard Contingencia</h2>
+          <p className="font-raleway text-sm text-gray-500 dark:text-slate-400 mt-0.5">
             Skill: <span className="font-medium text-xuma-blue dark:text-xuma-green-light">In_Contingencias</span> | Fecha:{" "}
             <input
               type="date"
               value={fecha}
               onChange={(e) => setFecha(e.target.value)}
-              className="input-field w-auto inline-block font-raleway"
+              className="input-field w-auto inline-block font-raleway !py-1.5"
             />
           </p>
         </div>
-        <div className="flex items-center gap-3 flex-wrap">
+        <div className="flex items-center gap-2 flex-wrap">
           <ExportButton fecha={fecha} timeRange={timeRange} />
-          <EmailPreview fecha={fecha} />
+          {isOwner && <EmailPreview fecha={fecha} />}
           <button
             onClick={fetchData}
             disabled={loading}
-            className="btn-secondary"
+            className="btn-secondary !py-2.5 !px-4 !text-[0.85rem]"
             title="Se actualiza solo cada 60 segundos — clic para actualizar ya"
           >
             <RefreshIcon spinning={loading} />
@@ -132,40 +150,52 @@ export default function Dashboard({ onUpdate }) {
 
       <FilterChips active={timeRange} onChange={setTimeRange} />
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-3">
         <KPICard
-          title="Total llamadas ingresadas"
+          title="Ingresadas"
           value={formatNumber(kpis.total_ingresadas)}
           icon={<PhoneIcon />}
-          color="bg-xuma-blue"
-          textColor="text-white"
           subtitle="100% del total"
           share={100}
         />
         <KPICard
-          title="Total llamadas abandono"
+          title="Abandono"
           value={formatNumber(kpis.total_abandono)}
-          subtitle={`${abandonoPct.toFixed(1)}% del total`}
+          subtitle={`${pct(kpis.total_abandono)}% del total`}
           icon={<AlertIcon />}
-          color="bg-red-500"
-          textColor="text-white"
           alert
-          share={abandonoPct}
+          share={Number(pct(kpis.total_abandono))}
         />
         <KPICard
-          title="Total llamadas atendidas"
+          title="Atendidas"
           value={formatNumber(kpis.total_atendidas)}
-          subtitle={`${atendidasPct.toFixed(1)}% del total`}
+          subtitle={`${pct(kpis.total_atendidas)}% del total`}
           icon={<CheckIcon />}
-          color="bg-xuma-green-dark"
-          textColor="text-white"
           success
-          share={atendidasPct}
+          share={Number(pct(kpis.total_atendidas))}
+        />
+        <KPICard
+          title="Únicos"
+          value={formatNumber(kpis.total_unicos)}
+          subtitle="1er registro por número"
+          icon={<UsersIcon />}
+          info
+          share={Number(pct(kpis.total_unicos))}
+        />
+        <KPICard
+          title="Duplicados"
+          value={formatNumber(kpis.total_duplicados)}
+          subtitle="Rellamadas mismo número"
+          icon={<CopyIcon />}
+          warn
+          share={Number(pct(kpis.total_duplicados))}
         />
       </div>
 
-      <TrendChart data={hourlyData} />
-      <HourlyChart data={hourlyData} loading={loading} />
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+        <TrendChart data={hourlyData} />
+        <HourlyChart data={hourlyData} loading={loading} />
+      </div>
     </div>
   );
 }
