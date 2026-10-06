@@ -19,10 +19,10 @@ export default function TrendChart({ data }) {
 
   if (!points.length) return null;
 
-  const W = 720, H = 168, PAD_L = 36, PAD_B = 24, PAD_T = 20;
+  const W = 720, H = 196, PAD_L = 36, PAD_B = 24, PAD_T = 18;
   const n = points.length;
   const slot = (W - PAD_L - 12) / n;
-  const bw = Math.min(30, slot * 0.52);
+  const bw = Math.min(36, slot * 0.58);
   const x = (i) => PAD_L + slot * i + slot / 2;
   const y = (v) => H - PAD_B - (v / max) * (H - PAD_B - PAD_T);
   const line = (key) => points.map((p, i) => `${i === 0 ? 'M' : 'L'}${x(i)},${y(p[key])}`).join(' ');
