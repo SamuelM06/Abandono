@@ -160,7 +160,7 @@ export default function DetailView() {
         </div>
         <div className="p-4 grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-5 gap-3 items-end">
           <label className="flex flex-col gap-1.5">
-            <span className="font-raleway text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-slate-400">📅 Fecha</span>
+            <span className="filter-label">📅 Fecha</span>
             <div className="flex gap-2">
               <input
                 type="date"
@@ -174,7 +174,7 @@ export default function DetailView() {
             </div>
           </label>
           <label className="flex flex-col gap-1.5">
-            <span className="font-raleway text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-slate-400">⏰ Rango horario</span>
+            <span className="filter-label">⏰ Rango horario</span>
             <select
               value={timeRange}
               onChange={(e) => { setTimeRange(e.target.value); setPage(1); }}
@@ -186,7 +186,7 @@ export default function DetailView() {
             </select>
           </label>
           <label className="flex flex-col gap-1.5">
-            <span className="font-raleway text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-slate-400">🧑 Asesor</span>
+            <span className="filter-label">🧑 Asesor</span>
             <select
               value={filters.agent}
               onChange={(e) => setFilters(prev => ({ ...prev, agent: e.target.value }))}
@@ -199,7 +199,7 @@ export default function DetailView() {
             </select>
           </label>
           <label className="flex flex-col gap-1.5">
-            <span className="font-raleway text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-slate-400">📞 Resultado</span>
+            <span className="filter-label">📞 Resultado</span>
             <select
               value={filters.result}
               onChange={(e) => setFilters(prev => ({ ...prev, result: e.target.value }))}
@@ -212,7 +212,7 @@ export default function DetailView() {
             </select>
           </label>
           <div className="flex flex-col gap-1.5">
-            <span className="font-raleway text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-slate-400">📋 Vista</span>
+            <span className="filter-label">📋 Vista</span>
             <div className="input-field !bg-gray-50 dark:!bg-slate-800/60 text-center font-semibold">
               {PAGE_SIZE} por página
             </div>

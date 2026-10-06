@@ -13,7 +13,7 @@ export default function TrendChart({ data }) {
 
   if (!points.length) return null;
 
-  const W = 720, H = 190, PAD_L = 36, PAD_B = 26, PAD_T = 22;
+  const W = 720, H = 168, PAD_L = 36, PAD_B = 24, PAD_T = 20;
   const n = points.length;
   const slot = (W - PAD_L - 12) / n;
   const bw = Math.min(34, slot * 0.52);

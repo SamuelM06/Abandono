@@ -221,6 +221,60 @@
 .select-field {
   appearance: none;
   background-color: white;
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23120180' stroke-width='2.5'%3e%3cpath stroke-linecap='round' stroke-linejoin='round' d='M19 9l-7 7-7-7'/%3e%3c/svg%3e");
+  background-repeat: no-repeat;
+  background-position: right 0.6rem center;
+  background-size: 1.1em;
+  padding-right: 2.2rem;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.select-field option {
+  background-color: #ffffff;
+  color: #333333;
+  font-family: var(--font-raleway);
+}
+
+.dark .select-field {
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%235AE280' stroke-width='2.5'%3e%3cpath stroke-linecap='round' stroke-linejoin='round' d='M19 9l-7 7-7-7'/%3e%3c/svg%3e");
+}
+
+.dark .select-field option {
+  background-color: #0f1530;
+  color: #e5e7eb;
+}
+
+input[type="date"].input-field {
+  color-scheme: light;
+  font-weight: 500;
+}
+
+.dark input[type="date"].input-field {
+  color-scheme: dark;
+}
+
+/* Etiquetas de filtro con acento de marca */
+.filter-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-family: var(--font-raleway);
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #4b5563;
+  background: linear-gradient(90deg, rgba(18,1,128,0.08), rgba(0,205,147,0.08));
+  border-left: 3px solid var(--color-xuma-green-dark);
+  padding: 0.3rem 0.6rem;
+  border-radius: 0 0.5rem 0.5rem 0;
+  width: fit-content;
+}
+
+.dark .filter-label {
+  color: #a5b4fc;
+  background: linear-gradient(90deg, rgba(90,226,128,0.12), rgba(18,1,128,0.25));
 }
 
 /* Table styles */

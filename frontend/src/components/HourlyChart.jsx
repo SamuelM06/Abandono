@@ -45,17 +45,17 @@ export default function HourlyChart({ data, loading }) {
 
   return (
     <div className="card">
-      <div className="card-header">
-        <h3 className="font-raleway font-semibold text-xuma-gray dark:text-white">Distribución por Hora</h3>
-        <p className="font-raleway text-sm text-gray-500 dark:text-slate-400 mt-1">Barras apiladas: Atendidas (verde) + Abandono (rojo) = Total</p>
+      <div className="card-header !py-3">
+        <h3 className="font-raleway font-semibold text-xuma-gray dark:text-white text-[15px]">Distribución por Hora</h3>
+        <p className="font-raleway text-xs text-gray-500 dark:text-slate-400 mt-0.5">Barras apiladas: Atendidas (verde) + Abandono (rojo) = Total</p>
       </div>
-      <div className="p-6">
-        <div className="space-y-4">
+      <div className="p-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-x-6 gap-y-3">
           {chartData.map((item, index) => (
             <div key={item.hora} className="animate-slide-in stagger-1" style={{ animationDelay: `${index * 0.05}s` }}>
-              <div className="flex items-center gap-3 mb-1">
-                <span className="font-raleway font-medium text-sm text-gray-700 dark:text-slate-300 w-16">{item.hora}</span>
-                <div className="flex-1 h-8 bg-gray-100 dark:bg-slate-700 rounded-full overflow-hidden relative">
+              <div className="flex items-center gap-2 mb-0.5">
+                <span className="font-raleway font-medium text-xs text-gray-700 dark:text-slate-300 w-12">{item.hora}</span>
+                <div className="flex-1 h-6 bg-gray-100 dark:bg-slate-700 rounded-full overflow-hidden relative">
                   {item.atendidas > 0 && (
                     <div
                       className="absolute left-0 top-0 h-full bg-xuma-green-dark rounded-l-full transition-all duration-500"
@@ -77,9 +77,9 @@ export default function HourlyChart({ data, loading }) {
                     <div className="absolute inset-0 bg-gray-200" />
                   )}
                 </div>
-                <span className="font-raleway font-bold text-sm text-xuma-gray dark:text-white w-16 text-right">{item.total}</span>
+                <span className="font-raleway font-bold text-xs text-xuma-gray dark:text-white w-10 text-right">{item.total}</span>
               </div>
-              <div className="flex items-center gap-4 text-xs text-gray-500 dark:text-slate-400 ml-16">
+              <div className="flex items-center gap-3 text-[11px] text-gray-500 dark:text-slate-400 ml-12">
                 <span className="flex items-center gap-1">
                   <span className="w-2 h-2 rounded-full bg-xuma-green-dark" />
                   Atendidas: {item.atendidas}
