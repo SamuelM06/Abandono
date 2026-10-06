@@ -1,5 +1,8 @@
 # Correo automatico 17:00 + vista previa
 
+## Firma
+Fuente: `context/Firma/FirmaSamuel.pdf` (SAMUEL DAVID MENA G. — Especialista de Datos | Experiencia al Cliente). El template HTML la replica con colores de marca (`context/manual_marca/`). Los datos viven en `EMAIL_SIGNATURE_*` del `.env` local.
+
 ## Destinatarias
 Se configuran SOLO en el `.env` local (no versionado):
 - `EMAIL_TO_JEFA` → jefa (To)

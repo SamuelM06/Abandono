@@ -29,6 +29,7 @@ class Settings(BaseSettings):
     email_signature_cargo: str = ""
     email_signature_email: str = ""
     email_signature_telefono: str = ""
+    email_signature_direccion: str = ""
     email_signature_web: str = ""
 
     # App

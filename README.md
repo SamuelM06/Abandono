@@ -17,6 +17,7 @@ abandono_xuma/
 │   └── .env.example
 ├── context/
 │   ├── manual_marca/      # Manual de marca Xuma
+│   ├── Firma/             # Firma institucional (PDF fuente de la firma del correo)
 │   └── docs/              # Documentacion de procesos (arquitectura, filtros, correo, operacion, despliegue)
 ├── scripts/               # Modo en vivo oculto en Windows (sin ventanas PowerShell)
 ├── docker-compose.yml

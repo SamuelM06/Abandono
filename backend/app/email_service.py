@@ -10,24 +10,34 @@ from app.services import get_kpis_for_date
 
 
 def _signature_html(settings) -> str:
-    nombre = settings.email_signature_nombre or "Su nombre"
-    cargo = settings.email_signature_cargo or "Su cargo"
+    # Firma tomada de context/Firma/FirmaSamuel.pdf
+    nombre = settings.email_signature_nombre or "SAMUEL DAVID MENA G."
+    cargo = settings.email_signature_cargo or "Especialista de Datos | Experiencia al Cliente"
     email = settings.email_signature_email or settings.email_from or ""
     telefono = settings.email_signature_telefono or ""
+    direccion = getattr(settings, "email_signature_direccion", "") or ""
     web = settings.email_signature_web or ""
+    lineas = "".join(
+        f"<div>{t}</div>"
+        for t in [
+            f"Email: {email}" if email else "",
+            f"{telefono}" if telefono else "",
+            f"{direccion}" if direccion else "",
+            f"{web}" if web else "",
+        ]
+        if t
+    )
     return f"""
     <table style="margin-top: 24px; font-family: 'Raleway', Arial, sans-serif; font-size: 13px; color: #333333;">
       <tr>
-        <td style="padding-right: 12px; border-right: 3px solid #00CD93;">
-          <strong style="font-size: 15px; color: #120180;">{nombre}</strong><br/>
-          <span style="color: #666;">{cargo}</span><br/>
-          <span>Email: {email}</span><br/>
-          {f"<span>Telefono: {telefono}</span><br/>" if telefono else ""}
-          {f"<span>Web: {web}</span>" if web else ""}
+        <td style="width: 4px; background: #00CD93; border-radius: 2px;">&nbsp;</td>
+        <td style="padding-left: 12px;">
+          <div style="font-size: 15px; font-weight: bold; color: #120180;">{nombre}</div>
+          <div style="color: #00CD93; font-weight: 600;">{cargo}</div>
+          <div style="margin-top: 6px; color: #555;">{lineas}</div>
         </td>
       </tr>
     </table>
-    <p style="font-size: 11px; color: #999;">Pegue aqui su firma de Outlook configurando EMAIL_SIGNATURE_* en el .env local.</p>
     """
 
 
