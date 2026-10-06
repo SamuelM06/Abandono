@@ -140,9 +140,9 @@ def create_detail_sheet(wb: Workbook, calls: List[CallDetail], fecha: date, time
     )
 
     headers = [
-        "ID", "FECHA", "HORA", "EXTENSIÓN", "AGENTE", "SKILL",
+        "ID", "FECHA", "HORA", "EXTENSIÓN", "AGENTE", "NOMBRE ASESOR", "SKILL",
         "TIPO LLAMADA", "CÓDIGO RESULTADO", "RESULTADO", "DETALLE RESULTADO",
-        "DURACIÓN (seg)", "TIEMPA COLA (seg)", "NÚMERO LLAMANTE", "ANI LOCAL"
+        "DURACIÓN (seg)", "TIEMPO COLA (seg)", "NÚMERO LLAMANTE", "ANI LOCAL"
     ]
 
     for col_idx, header in enumerate(headers, 1):
@@ -158,30 +158,31 @@ def create_detail_sheet(wb: Workbook, calls: List[CallDetail], fecha: date, time
         ws.cell(row=row_idx, column=3, value=call.fecha.strftime("%H:%M:%S")).font = normal_font
         ws.cell(row=row_idx, column=4, value=call.extension or "").font = normal_font
         ws.cell(row=row_idx, column=5, value=call.agent or "").font = normal_font
-        ws.cell(row=row_idx, column=6, value=call.skill).font = normal_font
-        ws.cell(row=row_idx, column=7, value=call.typecall or "").font = normal_font
-        ws.cell(row=row_idx, column=8, value=call.resultcall or "").font = normal_font
-        ws.cell(row=row_idx, column=9, value=call.resultcalldesc or "").font = normal_font
-        ws.cell(row=row_idx, column=10, value=call.resultdesc or "").font = normal_font
-        ws.cell(row=row_idx, column=11, value=round(call.timecall, 2) if call.timecall else 0).font = normal_font
-        ws.cell(row=row_idx, column=12, value=round(call.timequeue, 2) if call.timequeue else 0).font = normal_font
-        ws.cell(row=row_idx, column=13, value=call.numbercall or "").font = normal_font
-        ws.cell(row=row_idx, column=14, value=call.localani or "").font = normal_font
+        ws.cell(row=row_idx, column=6, value=call.asesor or "").font = normal_font
+        ws.cell(row=row_idx, column=7, value=call.skill).font = normal_font
+        ws.cell(row=row_idx, column=8, value=call.typecall or "").font = normal_font
+        ws.cell(row=row_idx, column=9, value=call.resultcall or "").font = normal_font
+        ws.cell(row=row_idx, column=10, value=call.resultcalldesc or "").font = normal_font
+        ws.cell(row=row_idx, column=11, value=call.resultdesc or "").font = normal_font
+        ws.cell(row=row_idx, column=12, value=round(call.timecall, 2) if call.timecall else 0).font = normal_font
+        ws.cell(row=row_idx, column=13, value=round(call.timequeue, 2) if call.timequeue else 0).font = normal_font
+        ws.cell(row=row_idx, column=14, value=call.numbercall or "").font = normal_font
+        ws.cell(row=row_idx, column=15, value=call.localani or "").font = normal_font
 
-        for col_idx in range(1, 15):
+        for col_idx in range(1, 16):
             ws.cell(row=row_idx, column=col_idx).border = thin_border
             if row_idx % 2 == 0:
                 ws.cell(row=row_idx, column=col_idx).fill = PatternFill(start_color=LIGHT_GRAY, end_color=LIGHT_GRAY, fill_type="solid")
 
-            if col_idx in [9, 10]:
+            if col_idx in [10, 11]:
                 ws.cell(row=row_idx, column=col_idx).alignment = Alignment(wrap_text=True)
 
-            if col_idx == 9 and call.resultcall == "10164":
+            if col_idx == 10 and call.resultcall == "10164":
                 ws.cell(row=row_idx, column=col_idx).font = Font(name="Raleway", size=10, bold=True, color="C62828")
-            elif col_idx == 9 and call.resultcall == "16":
+            elif col_idx == 10 and call.resultcall == "16":
                 ws.cell(row=row_idx, column=col_idx).font = Font(name="Raleway", size=10, color=XUMA_GREEN_DARK)
 
-    column_widths = [8, 12, 10, 12, 14, 20, 14, 14, 18, 30, 14, 14, 16, 16]
+    column_widths = [8, 12, 10, 12, 14, 28, 20, 14, 14, 18, 30, 14, 14, 16, 16]
     for i, width in enumerate(column_widths, 1):
         ws.column_dimensions[get_column_letter(i)].width = width
 

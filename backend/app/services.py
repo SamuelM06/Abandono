@@ -108,14 +108,16 @@ def get_calls_detail(
         offset = (page - 1) * page_size
         detail_query = f"""
             SELECT
-                idlog_calls, fecha, extension, agent, skill, typecall,
-                resultcall, resultcalldesc, resultdesc,
-                timecall, timequeue, numbercall, localani
-            FROM {get_schema()}.log_calls
-            WHERE skill = %s AND typecall = %s
-            AND fecha >= %s AND fecha <= %s
-            {time_filter}
-            ORDER BY fecha DESC
+                lc.idlog_calls, lc.fecha, lc.extension, lc.agent, a.nombre as asesor,
+                lc.skill, lc.typecall,
+                lc.resultcall, lc.resultcalldesc, lc.resultdesc,
+                lc.timecall, lc.timequeue, lc.numbercall, lc.localani
+            FROM {get_schema()}.log_calls lc
+            LEFT JOIN {get_schema()}.agent a ON a."user" = lc.agent
+            WHERE lc.skill = %s AND lc.typecall = %s
+            AND lc.fecha >= %s AND lc.fecha <= %s
+            {time_filter.replace('fecha::', 'lc.fecha::')}
+            ORDER BY lc.fecha DESC
             LIMIT %s OFFSET %s
         """
         cur.execute(detail_query, tuple([*params, page_size, offset]))
@@ -127,15 +129,16 @@ def get_calls_detail(
                 fecha=row[1],
                 extension=row[2],
                 agent=row[3],
-                skill=row[4],
-                typecall=row[5],
-                resultcall=row[6],
-                resultcalldesc=row[7],
-                resultdesc=row[8],
-                timecall=row[9],
-                timequeue=row[10],
-                numbercall=row[11],
-                localani=row[12],
+                asesor=(row[4] or "").strip() or None,
+                skill=row[5],
+                typecall=row[6],
+                resultcall=row[7],
+                resultcalldesc=row[8],
+                resultdesc=row[9],
+                timecall=row[10],
+                timequeue=row[11],
+                numbercall=row[12],
+                localani=row[13],
             ))
 
         return calls, total

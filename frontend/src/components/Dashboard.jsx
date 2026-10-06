@@ -1,11 +1,13 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import KPICard from './KPICard';
 import HourlyChart from './HourlyChart';
+import TrendChart from './TrendChart';
 import FilterChips from './FilterChips';
 import ExportButton from './ExportButton';
 import EmailPreview from './EmailPreview';
 
 const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:8000/api';
+const REFRESH_SECONDS = 60;
 
 const PhoneIcon = () => (
   <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -15,7 +17,7 @@ const PhoneIcon = () => (
 
 const AlertIcon = () => (
   <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
   </svg>
 );
 
@@ -25,15 +27,9 @@ const CheckIcon = () => (
   </svg>
 );
 
-const RefreshIcon = () => (
-  <svg className="w-5 h-5 inline mr-1 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+const RefreshIcon = ({ spinning }) => (
+  <svg className={`w-5 h-5 inline mr-1 ${spinning ? 'animate-spin' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-  </svg>
-);
-
-const DownloadIcon = () => (
-  <svg className="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
   </svg>
 );
 
@@ -47,9 +43,11 @@ export default function Dashboard({ onUpdate }) {
   const [loading, setLoading] = useState(true);
   const [timeRange, setTimeRange] = useState('dia_completo');
   const [fecha, setFecha] = useState(() => new Date().toISOString().split('T')[0]);
-  const [autoRefresh, setAutoRefresh] = useState(true);
+  const [countdown, setCountdown] = useState(REFRESH_SECONDS);
+  const timer = useRef(null);
 
   const fetchData = useCallback(async () => {
+    setLoading(true);
     try {
       // La fecha y el rango SIEMPRE salen de lo seleccionado en el front (nada hardcodeado).
       const params = new URLSearchParams({ fecha, time_range: timeRange });
@@ -75,6 +73,7 @@ export default function Dashboard({ onUpdate }) {
       console.error('Error fetching data:', error);
     } finally {
       setLoading(false);
+      setCountdown(REFRESH_SECONDS);
     }
   }, [fecha, timeRange, onUpdate]);
 
@@ -82,41 +81,36 @@ export default function Dashboard({ onUpdate }) {
     fetchData();
   }, [fetchData]);
 
+  // El mismo botón se auto-actualiza cada minuto (cuenta regresiva visible).
   useEffect(() => {
-    if (!autoRefresh) return;
-    const interval = setInterval(fetchData, 60000);
-    return () => clearInterval(interval);
-  }, [autoRefresh, fetchData]);
-
-  const handleTimeRangeChange = (range) => {
-    setTimeRange(range);
-  };
-
-  const handleFechaChange = (newFecha) => {
-    setFecha(newFecha);
-  };
+    timer.current = setInterval(() => {
+      setCountdown((c) => {
+        if (c <= 1) {
+          fetchData();
+          return REFRESH_SECONDS;
+        }
+        return c - 1;
+      });
+    }, 1000);
+    return () => clearInterval(timer.current);
+  }, [fetchData]);
 
   const formatNumber = (num) => new Intl.NumberFormat('es-CO').format(num);
-
-  const abandonoPercent = kpis.total_ingresadas > 0
-    ? ((kpis.total_abandono / kpis.total_ingresadas) * 100).toFixed(1)
-    : 0;
-
-  const atendidasPercent = kpis.total_ingresadas > 0
-    ? ((kpis.total_atendidas / kpis.total_ingresadas) * 100).toFixed(1)
-    : 0;
+  const total = kpis.total_ingresadas || 0;
+  const abandonoPct = total > 0 ? (kpis.total_abandono / total) * 100 : 0;
+  const atendidasPct = total > 0 ? (kpis.total_atendidas / total) * 100 : 0;
 
   return (
     <div className="space-y-6 animate-slide-in">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h2 className="font-raleway font-bold text-2xl text-xuma-gray">Dashboard Contingencia</h2>
-          <p className="font-raleway text-gray-500 mt-1">
-            Skill: <span className="font-medium text-xuma-blue">In_Contingencias</span> | Fecha:{" "}
+          <h2 className="font-raleway font-bold text-2xl text-xuma-gray dark:text-white">Dashboard Contingencia</h2>
+          <p className="font-raleway text-gray-500 dark:text-slate-400 mt-1">
+            Skill: <span className="font-medium text-xuma-blue dark:text-xuma-green-light">In_Contingencias</span> | Fecha:{" "}
             <input
               type="date"
               value={fecha}
-              onChange={(e) => handleFechaChange(e.target.value)}
+              onChange={(e) => setFecha(e.target.value)}
               className="input-field w-auto inline-block font-raleway"
             />
           </p>
@@ -124,57 +118,53 @@ export default function Dashboard({ onUpdate }) {
         <div className="flex items-center gap-3 flex-wrap">
           <ExportButton fecha={fecha} timeRange={timeRange} />
           <EmailPreview fecha={fecha} />
-          <label className="flex items-center gap-2 cursor-pointer">
-            <input
-              type="checkbox"
-              checked={autoRefresh}
-              onChange={(e) => setAutoRefresh(e.target.checked)}
-              className="w-4 h-4 text-xuma-blue border-gray-300 rounded focus:ring-xuma-blue"
-            />
-            <span className="font-raleway text-sm text-gray-600">Auto-actualizar (1 min)</span>
-          </label>
           <button
             onClick={fetchData}
             disabled={loading}
             className="btn-secondary"
+            title="Se actualiza solo cada 60 segundos — clic para actualizar ya"
           >
-            <RefreshIcon />
-            Actualizar
+            <RefreshIcon spinning={loading} />
+            {loading ? 'Actualizando...' : `Actualizar (${countdown}s)`}
           </button>
         </div>
       </div>
 
-      <FilterChips active={timeRange} onChange={handleTimeRangeChange} />
+      <FilterChips active={timeRange} onChange={setTimeRange} />
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <KPICard
-          title="TOTAL LLAMADAS INGRESADAS"
+          title="Total llamadas ingresadas"
           value={formatNumber(kpis.total_ingresadas)}
           icon={<PhoneIcon />}
           color="bg-xuma-blue"
           textColor="text-white"
-          subtitle={`100% del total`}
+          subtitle="100% del total"
+          share={100}
         />
         <KPICard
-          title="TOTAL LLAMADAS ABANDONO"
+          title="Total llamadas abandono"
           value={formatNumber(kpis.total_abandono)}
-          subtitle={`${abandonoPercent}% del total`}
+          subtitle={`${abandonoPct.toFixed(1)}% del total`}
           icon={<AlertIcon />}
           color="bg-red-500"
           textColor="text-white"
           alert
+          share={abandonoPct}
         />
         <KPICard
-          title="TOTAL LLAMADAS ATENDIDAS"
+          title="Total llamadas atendidas"
           value={formatNumber(kpis.total_atendidas)}
-          subtitle={`${atendidasPercent}% del total`}
+          subtitle={`${atendidasPct.toFixed(1)}% del total`}
           icon={<CheckIcon />}
           color="bg-xuma-green-dark"
           textColor="text-white"
           success
+          share={atendidasPct}
         />
       </div>
 
+      <TrendChart data={hourlyData} />
       <HourlyChart data={hourlyData} loading={loading} />
     </div>
   );

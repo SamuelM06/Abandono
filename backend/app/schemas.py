@@ -24,6 +24,7 @@ class CallDetail(BaseModel):
     fecha: datetime
     extension: Optional[str]
     agent: Optional[str]
+    asesor: Optional[str] = None
     skill: str
     typecall: Optional[str]
     resultcall: Optional[str]

@@ -3,13 +3,25 @@ import ExportButton from './ExportButton';
 import Pagination from './Pagination';
 
 const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:8000/api';
+const PAGE_SIZE = 10;
+
+const FilterIcon = () => (
+  <svg className="w-5 h-5 text-xuma-green-dark" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+  </svg>
+);
+
+const TableIcon = () => (
+  <svg className="w-5 h-5 text-xuma-blue dark:text-xuma-green-light" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+  </svg>
+);
 
 export default function DetailView() {
   const [calls, setCalls] = useState([]);
   const [loading, setLoading] = useState(true);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(50);
   const [timeRange, setTimeRange] = useState('dia_completo');
   const [fecha, setFecha] = useState(() => new Date().toISOString().split('T')[0]);
   const [sortConfig, setSortConfig] = useState({ key: 'fecha', direction: 'desc' });
@@ -23,7 +35,7 @@ export default function DetailView() {
         time_range: timeRange,
         skill: 'In_Contingencias',
         page: page.toString(),
-        page_size: pageSize.toString(),
+        page_size: PAGE_SIZE.toString(),
       });
 
       const response = await fetch(`${API_BASE}/calls?${params}`);
@@ -37,7 +49,7 @@ export default function DetailView() {
     } finally {
       setLoading(false);
     }
-  }, [fecha, timeRange, page, pageSize]);
+  }, [fecha, timeRange, page]);
 
   useEffect(() => {
     fetchData();
@@ -57,8 +69,9 @@ export default function DetailView() {
   });
 
   const filteredCalls = sortedCalls.filter(call => {
-    const agentMatch = !filters.agent || (call.agent && call.agent.includes(filters.agent));
-    const resultMatch = !filters.result || (call.resultcalldesc && call.resultcalldesc.toLowerCase().includes(filters.result.toLowerCase()));
+    const q = filters.agent.toLowerCase();
+    const agentMatch = !q || (call.agent && call.agent.includes(filters.agent)) || (call.asesor && call.asesor.toLowerCase().includes(q));
+    const resultMatch = !filters.result || (call.resultcalldesc && call.resultcalldesc.toLowerCase().includes(filters.result.toLowerCase())) || (call.resultdesc && call.resultdesc.toLowerCase().includes(filters.result.toLowerCase()));
     return agentMatch && resultMatch;
   });
 
@@ -66,37 +79,49 @@ export default function DetailView() {
 
   const getResultBadge = (call) => {
     if (call.resultcall === '10164') {
-      return <span className="badge-abandono">ABANDONO</span>;
+      return (
+        <span className="badge-abandono">
+          <svg className="w-3.5 h-3.5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+          </svg>
+          ABANDONO
+        </span>
+      );
     }
     if (call.resultcall === '16') {
-      return <span className="badge-atendida">ATENDIDA</span>;
+      return (
+        <span className="badge-atendida">
+          <svg className="w-3.5 h-3.5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+          </svg>
+          ATENDIDA
+        </span>
+      );
     }
-    return <span className="text-gray-500">{call.resultcalldesc || call.resultcall}</span>;
+    return <span className="text-gray-500 dark:text-slate-400 font-raleway text-xs">{call.resultcalldesc || call.resultcall}</span>;
   };
 
   const columns = [
-    { key: 'fecha', label: 'Fecha', render: (c) => new Date(c.fecha).toLocaleString('es-CO') },
+    { key: 'fecha', label: 'Fecha', render: (c) => new Date(c.fecha).toLocaleDateString('es-CO') },
     { key: 'hora', label: 'Hora', render: (c) => new Date(c.fecha).toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit', second: '2-digit' }) },
-    { key: 'agent', label: 'Agente', render: (c) => c.agent || '-' },
-    { key: 'extension', label: 'Extensión', render: (c) => c.extension || '-' },
-    { key: 'skill', label: 'Skill', render: (c) => c.skill },
-    { key: 'typecall', label: 'Tipo', render: (c) => c.typecall || '-' },
+    { key: 'asesor', label: 'Nombre asesor', render: (c) => c.asesor || '—' },
+    { key: 'agent', label: 'Agente', render: (c) => c.agent || '—' },
+    { key: 'extension', label: 'Extensión', render: (c) => c.extension || '—' },
     { key: 'resultcall', label: 'Resultado', render: getResultBadge },
-    { key: 'resultdesc', label: 'Detalle', render: (c) => c.resultdesc || '-' },
-    { key: 'timecall', label: 'Duración (s)', render: (c) => c.timecall ? c.timecall.toFixed(1) : '-' },
-    { key: 'timequeue', label: 'Cola (s)', render: (c) => c.timequeue ? c.timequeue.toFixed(1) : '-' },
-    { key: 'numbercall', label: 'Número', render: (c) => c.numbercall || '-' },
-    { key: 'localani', label: 'ANI Local', render: (c) => c.localani || '-' },
+    { key: 'resultdesc', label: 'Detalle', render: (c) => c.resultdesc || '—' },
+    { key: 'timecall', label: 'Duración (s)', render: (c) => c.timecall ? c.timecall.toFixed(1) : '—' },
+    { key: 'timequeue', label: 'Cola (s)', render: (c) => c.timequeue ? c.timequeue.toFixed(1) : '—' },
+    { key: 'numbercall', label: 'Número', render: (c) => c.numbercall || '—' },
   ];
 
   return (
     <div className="space-y-6 animate-slide-in">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h2 className="font-raleway font-bold text-2xl text-xuma-gray">Detalle de Llamadas</h2>
-          <p className="font-raleway text-gray-500 mt-1">
-            Skill: <span className="font-medium text-xuma-blue">In_Contingencias</span> |{" "}
-            Total: <span className="font-bold text-xuma-gray">{formatNumber(total)}</span> registros
+          <h2 className="font-raleway font-bold text-2xl text-xuma-gray dark:text-white">Detalle de llamadas</h2>
+          <p className="font-raleway text-gray-500 dark:text-slate-400 mt-1">
+            Skill: <span className="font-medium text-xuma-blue dark:text-xuma-green-light">In_Contingencias</span> |{" "}
+            Total: <span className="font-bold text-xuma-gray dark:text-white">{formatNumber(total)}</span> registros
           </p>
         </div>
         <ExportButton fecha={fecha} timeRange={timeRange} />
@@ -104,60 +129,76 @@ export default function DetailView() {
 
       <div className="card">
         <div className="card-header">
-          <div className="flex flex-col sm:flex-row gap-4">
-            <div className="flex flex-wrap gap-2">
-              <label className="flex items-center gap-2">
-                <span className="font-raleway text-sm text-gray-600">Rango:</span>
-                <select
-                  value={timeRange}
-                  onChange={(e) => { setTimeRange(e.target.value); setPage(1); }}
-                  className="select-field w-auto"
-                >
-                  <option value="medio_dia">Medio día (8:00 - 12:00)</option>
-                  <option value="dia_completo">Día completo (8:00 - 17:30)</option>
-                  <option value="fuera_horario">Fuera de horario (17:30+)</option>
-                </select>
-              </label>
-              <label className="flex items-center gap-2">
-                <span className="font-raleway text-sm text-gray-600">Fecha:</span>
-                <input
-                  type="date"
-                  value={fecha}
-                  onChange={(e) => { setFecha(e.target.value); setPage(1); }}
-                  className="input-field w-auto"
-                />
-              </label>
-            </div>
-            <div className="flex flex-wrap gap-2">
-              <input
-                type="text"
-                placeholder="Filtrar por agente..."
-                value={filters.agent}
-                onChange={(e) => setFilters(prev => ({ ...prev, agent: e.target.value }))}
-                className="input-field w-48"
-              />
-              <input
-                type="text"
-                placeholder="Filtrar por resultado..."
-                value={filters.result}
-                onChange={(e) => setFilters(prev => ({ ...prev, result: e.target.value }))}
-                className="input-field w-48"
-              />
-            </div>
-          </div>
+          <h3 className="font-raleway font-bold text-xuma-gray dark:text-white flex items-center gap-2">
+            <FilterIcon /> Filtros de búsqueda
+          </h3>
+        </div>
+        <div className="p-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <label className="flex flex-col gap-1.5">
+            <span className="font-raleway text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-slate-400">📅 Fecha</span>
+            <input
+              type="date"
+              value={fecha}
+              onChange={(e) => { setFecha(e.target.value); setPage(1); }}
+              className="input-field"
+            />
+          </label>
+          <label className="flex flex-col gap-1.5">
+            <span className="font-raleway text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-slate-400">⏰ Rango horario</span>
+            <select
+              value={timeRange}
+              onChange={(e) => { setTimeRange(e.target.value); setPage(1); }}
+              className="select-field"
+            >
+              <option value="medio_dia">Medio día (8:00 - 12:00)</option>
+              <option value="dia_completo">Día completo (8:00 - 17:30)</option>
+              <option value="fuera_horario">Fuera de horario</option>
+            </select>
+          </label>
+          <label className="flex flex-col gap-1.5">
+            <span className="font-raleway text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-slate-400">🧑 Asesor / agente</span>
+            <input
+              type="text"
+              placeholder="Nombre o documento..."
+              value={filters.agent}
+              onChange={(e) => setFilters(prev => ({ ...prev, agent: e.target.value }))}
+              className="input-field"
+            />
+          </label>
+          <label className="flex flex-col gap-1.5">
+            <span className="font-raleway text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-slate-400">📞 Resultado</span>
+            <input
+              type="text"
+              placeholder="Abandono, contacto..."
+              value={filters.result}
+              onChange={(e) => setFilters(prev => ({ ...prev, result: e.target.value }))}
+              className="input-field"
+            />
+          </label>
+        </div>
+      </div>
+
+      <div className="card">
+        <div className="card-header flex items-center justify-between">
+          <h3 className="font-raleway font-bold text-xuma-gray dark:text-white flex items-center gap-2">
+            <TableIcon /> Registros
+          </h3>
+          <span className="font-raleway text-xs text-gray-500 dark:text-slate-400">
+            Página {page} de {Math.max(1, Math.ceil(total / PAGE_SIZE))} · {PAGE_SIZE} por página
+          </span>
         </div>
 
         <div className="table-container">
-          <table className="data-table">
+          <table className="data-table text-center">
             <thead>
               <tr>
                 {columns.map((col) => (
                   <th
                     key={col.key}
                     onClick={() => handleSort(col.key)}
-                    className="cursor-pointer select-none"
+                    className="cursor-pointer select-none text-center whitespace-nowrap"
                   >
-                    <div className="flex items-center gap-1">
+                    <div className="flex items-center justify-center gap-1">
                       {col.label}
                       {sortConfig.key === col.key && (
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -174,10 +215,10 @@ export default function DetailView() {
                 <tr>
                   <td colSpan={columns.length} className="text-center py-12">
                     <div className="flex flex-col items-center gap-3">
-                      <svg className="animate-spin w-8 h-8 text-xuma-blue" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <svg className="animate-spin w-8 h-8 text-xuma-green-dark" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                       </svg>
-                      <p className="font-raleway text-gray-500">Cargando llamadas...</p>
+                      <p className="font-raleway text-gray-500 dark:text-slate-400">Cargando llamadas...</p>
                     </div>
                   </td>
                 </tr>
@@ -185,18 +226,18 @@ export default function DetailView() {
                 <tr>
                   <td colSpan={columns.length} className="text-center py-12">
                     <div className="flex flex-col items-center gap-3">
-                      <svg className="w-12 h-12 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <svg className="w-12 h-12 text-gray-300 dark:text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                       </svg>
-                      <p className="font-raleway text-gray-500">No se encontraron llamadas con los filtros actuales</p>
+                      <p className="font-raleway text-gray-500 dark:text-slate-400">No se encontraron llamadas con los filtros actuales</p>
                     </div>
                   </td>
                 </tr>
               ) : (
                 filteredCalls.map((call) => (
-                  <tr key={call.idlog_calls} className={call.resultcall === '10164' ? 'bg-red-50' : ''}>
+                  <tr key={call.idlog_calls} className={call.resultcall === '10164' ? 'bg-red-50 dark:bg-red-950/30' : ''}>
                     {columns.map((col) => (
-                      <td key={col.key}>
+                      <td key={col.key} className="text-center whitespace-nowrap">
                         {col.render(call)}
                       </td>
                     ))}
@@ -207,15 +248,13 @@ export default function DetailView() {
           </table>
         </div>
 
-        {total > pageSize && (
-          <div className="px-6 py-4 border-t border-gray-100">
-            <Pagination
-              currentPage={page}
-              totalPages={Math.ceil(total / pageSize)}
-              onPageChange={setPage}
-            />
-          </div>
-        )}
+        <div className="px-6 py-4 border-t border-gray-100 dark:border-slate-700">
+          <Pagination
+            currentPage={page}
+            totalPages={Math.max(1, Math.ceil(total / PAGE_SIZE))}
+            onPageChange={setPage}
+          />
+        </div>
       </div>
     </div>
   );
