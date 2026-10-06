@@ -50,7 +50,7 @@ export default function HourlyChart({ data, loading }) {
         <p className="font-raleway text-xs text-gray-500 dark:text-slate-400 mt-0.5">Barras apiladas: Atendidas (verde) + Abandono (rojo) = Total</p>
       </div>
       <div className="p-4">
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-x-6 gap-y-3">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-5 gap-y-2.5">
           {chartData.map((item, index) => (
             <div key={item.hora} className="animate-slide-in stagger-1" style={{ animationDelay: `${index * 0.05}s` }}>
               <div className="flex items-center gap-2 mb-0.5">

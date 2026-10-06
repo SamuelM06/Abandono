@@ -158,7 +158,7 @@ export default function DetailView() {
             <FilterIcon /> Filtros de búsqueda
           </h3>
         </div>
-        <div className="p-4 grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-5 gap-3 items-end">
+        <div className="p-5 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-x-5 gap-y-4 items-end">
           <label className="flex flex-col gap-1.5">
             <span className="filter-label">📅 Fecha</span>
             <div className="flex gap-2">

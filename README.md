@@ -51,9 +51,9 @@ npm run dev                            # http://localhost:5173
 - Detener: `scripts\detener.bat`.
 - Detalle en `context/docs/despliegue_acceso.md`.
 
-## Correo automatico 17:00 + vista previa
+## Correo automatico 17:20 + vista previa
 
-- Scheduler diario 17:00 (America/Bogota) con Excel adjunto `Reporte Abandono AAAA-MM-DD.xlsx`.
+- Scheduler diario 17:20 (America/Bogota) con Excel adjunto `Reporte Abandono AAAA-MM-DD.xlsx`.
 - Destinatarias y firma de Outlook se configuran en el `.env` local (`EMAIL_TO_JEFA`, `EMAIL_TO_COORD`, `EMAIL_SIGNATURE_*`).
 - **Vista previa sin enviar:** boton "Vista previa correo" en el Dashboard o `GET /api/email/preview?fecha=AAAA-MM-DD`.
 - Detalle en `context/docs/correo_automatico.md` y operacion en `context/docs/operacion_diaria.md`.

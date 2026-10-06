@@ -6,8 +6,8 @@
 3. A mitad del dia, cambiar a **Medio dia (8:00–12:00)** y exportar el Excel si lo piden.
 
 ## Tarde
-1. ~16:50: abrir **Vista previa correo** y validar asunto, destinatarias, KPIs y adjunto.
-2. 17:00: el sistema envia el correo automaticamente con el Excel del dia.
+1. ~17:10: abrir **Vista previa correo** y validar asunto, destinatarias, KPIs y adjunto.
+2. 17:20: el sistema envia el correo automaticamente con el Excel del dia.
 3. Si algo falla, envio manual: `POST /api/email/send-daily?fecha=AAAA-MM-DD`.
 
 ## Fuera de horario

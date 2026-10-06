@@ -173,6 +173,6 @@ pg_dump -h $DB_HOST -U $DB_USER -d $DB_NAME -n $DB_SCHEMA > backup.sql
 ## Monitoreo y mantenimiento
 
 - Los logs están en `docker-compose logs -f`
-- El scheduler envía email automáticamente a las 17:00 (hora Colombia)
+- El scheduler envía email automáticamente a las 17:20 (hora Colombia)
 - Para ver emails enviados: revisar logs del backend
 - La BD se conecta via variables de entorno al host corporativo (no se replica localmente)

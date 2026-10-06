@@ -192,8 +192,10 @@ export default function Dashboard({ onUpdate }) {
         />
       </div>
 
-      <TrendChart data={hourlyData} />
-      <HourlyChart data={hourlyData} loading={loading} />
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+        <TrendChart data={hourlyData} />
+        <HourlyChart data={hourlyData} loading={loading} />
+      </div>
     </div>
   );
 }

@@ -13,7 +13,8 @@ from app.services import (
 from app.database import get_settings
 from app.excel_export import generate_excel_report
 from app.email_service import (
-    send_daily_report_email, test_email_connection, build_daily_report_context
+    send_daily_report_email, test_email_connection, build_daily_report_context,
+    preview_body_html
 )
 
 router = APIRouter(prefix="/api", tags=["abandono"])
@@ -163,7 +164,9 @@ async def preview_daily_email(
     Sirve para revisar asunto, destinatarios, cuerpo y KPIs antes del envio de las 17:00.
     """
     target_date = datetime.strptime(fecha, "%Y-%m-%d").date() if fecha else date.today()
-    return build_daily_report_context(target_date, skill)
+    ctx = build_daily_report_context(target_date, skill)
+    ctx["body_html"] = preview_body_html(ctx["body_html"])
+    return ctx
 
 
 @router.post("/email/send-daily")

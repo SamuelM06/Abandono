@@ -1,12 +1,30 @@
+import os
 import smtplib
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from email.mime.base import MIMEBase
+from email.mime.image import MIMEImage
 from email import encoders
 from datetime import date, datetime
 from app.database import get_settings
 from app.excel_export import generate_daily_excel_report
 from app.services import get_kpis_for_date
+
+
+LOGO_CID = "xuma_logo"
+LOGO_PATH = os.path.join(os.path.dirname(__file__), "assets", "logo-xuma.png")
+
+
+def preview_body_html(body_html: str) -> str:
+    """Para la vista previa: incrusta el logo en base64 (en el correo real va por CID)."""
+    if f"cid:{LOGO_CID}" in body_html and os.path.exists(LOGO_PATH):
+        import base64
+        with open(LOGO_PATH, "rb") as f:
+            b64 = base64.b64encode(f.read()).decode()
+        body_html = body_html.replace(
+            f"cid:{LOGO_CID}", f"data:image/png;base64,{b64}"
+        )
+    return body_html
 
 
 def _signature_html(settings) -> str:
@@ -57,6 +75,7 @@ def build_daily_report_context(target_date: date = None, skill: str = "In_Contin
     <body style="font-family: 'Raleway', Arial, sans-serif; color: #333333;">
       <div style="max-width: 640px; margin: 0 auto; padding: 20px;">
         <div style="background: #120180; color: white; padding: 22px; text-align: center; border-radius: 10px 10px 0 0;">
+          <img src="cid:xuma_logo" alt="Xuma" style="height: 46px; margin-bottom: 10px;" />
           <h1 style="margin: 0; font-size: 22px;">Reporte diario de contingencia</h1>
           <p style="margin: 8px 0 0; opacity: 0.9;">Skill {skill} | {target_date.strftime('%d/%m/%Y')}</p>
         </div>
@@ -121,6 +140,13 @@ def send_daily_report_email(target_date: date = None, skill: str = "In_Contingen
             recipients.append(settings.email_to_coord)
 
         msg.attach(MIMEText(ctx["body_html"], "html"))
+
+        if os.path.exists(LOGO_PATH):
+            with open(LOGO_PATH, "rb") as lf:
+                logo = MIMEImage(lf.read())
+            logo.add_header("Content-ID", f"<{LOGO_CID}>")
+            logo.add_header("Content-Disposition", "inline", filename="logo-xuma.png")
+            msg.attach(logo)
 
         part = MIMEBase("application", "octet-stream")
         part.set_payload(excel_bytes.read())
