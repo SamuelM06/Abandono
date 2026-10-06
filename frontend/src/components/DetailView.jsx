@@ -89,6 +89,8 @@ export default function DetailView() {
     }
   })();
 
+  const hasActiveFilters = fecha !== todayStr() || timeRange !== 'dia_completo' || filters.agent || filters.result;
+
   const handleSort = (key) => {
     setSortConfig(prev => ({
       key,
@@ -224,15 +226,17 @@ export default function DetailView() {
               {PAGE_SIZE} por página
             </div>
           </div>
-          <label className="flex flex-col gap-1.5">
-            <span className="filter-label">&nbsp;</span>
-            <button onClick={clearFilters} className="btn-secondary !py-2.5 !px-4 !text-[0.85rem]" title="Limpiar todos los filtros">
-              <svg className="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
-              Limpiar filtros
-            </button>
-          </label>
+          {hasActiveFilters && (
+            <label className="flex flex-col gap-1.5">
+              <span className="filter-label">&nbsp;</span>
+              <button onClick={clearFilters} className="btn-secondary !py-2.5 !px-4 !text-[0.85rem]" title="Limpiar todos los filtros">
+                <svg className="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+                Limpiar filtros
+              </button>
+            </label>
+          )}
         </div>
       </div>
 
