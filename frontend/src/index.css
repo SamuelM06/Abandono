@@ -286,25 +286,16 @@ input[type="date"].input-field {
 
 /* Etiquetas de filtro con acento de marca */
 .filter-label {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.35rem;
   font-family: var(--font-raleway);
   font-size: 0.72rem;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.06em;
   color: #4b5563;
-  background: linear-gradient(90deg, rgba(18,1,128,0.08), rgba(0,205,147,0.08));
-  border-left: 3px solid var(--color-xuma-green-dark);
-  padding: 0.3rem 0.6rem;
-  border-radius: 0 0.5rem 0.5rem 0;
-  width: fit-content;
 }
 
 .dark .filter-label {
   color: #a5b4fc;
-  background: linear-gradient(90deg, rgba(90,226,128,0.12), rgba(18,1,128,0.25));
 }
 
 /* Table styles */
