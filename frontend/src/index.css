@@ -138,7 +138,28 @@
   box-shadow: 0 10px 24px -6px rgba(0,205,147,0.7);
 }
 
-.btn-export:disabled, .btn-preview:disabled {
+.btn-abandono {
+  background: linear-gradient(135deg, #b91c1c 0%, #ef4444 100%);
+  color: white;
+  padding: 0.625rem 1.1rem;
+  border-radius: 0.65rem;
+  font-family: var(--font-raleway);
+  font-weight: 700;
+  font-size: 0.85rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  box-shadow: 0 6px 18px -6px rgba(185, 28, 28, 0.6);
+  transition: transform 0.15s, box-shadow 0.2s;
+  border: 1px solid rgba(255,255,255,0.25);
+}
+
+.btn-abandono:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 10px 24px -6px rgba(185, 28, 28, 0.7);
+}
+
+.btn-export:disabled, .btn-preview:disabled, .btn-abandono:disabled {
   opacity: 0.6;
   cursor: wait;
   transform: none;
@@ -439,6 +460,40 @@ input[type="date"].input-field {
 .dark .badge-abandono {
   background-color: rgb(239 68 68 / 0.15);
   color: #fca5a5;
+}
+
+.badge-fuera-horario {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.125rem 0.625rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-family: var(--font-raleway);
+  font-weight: 500;
+  background-color: #ffedd5;
+  color: #9a3412;
+}
+
+.dark .badge-fuera-horario {
+  background-color: rgb(249 115 22 / 0.18);
+  color: #fdba74;
+}
+
+.badge-queue-timeout {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.125rem 0.625rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-family: var(--font-raleway);
+  font-weight: 500;
+  background-color: #e2e8f0;
+  color: #475569;
+}
+
+.dark .badge-queue-timeout {
+  background-color: rgb(148 163 184 / 0.18);
+  color: #cbd5e1;
 }
 
 .dark .badge-atendida {

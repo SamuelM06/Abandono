@@ -2,7 +2,7 @@ import { useState } from 'react';
 
 const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:8000/api';
 
-export default function EmailPreview({ fecha }) {
+export default function EmailPreview({ fecha, skills }) {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [preview, setPreview] = useState(null);
@@ -12,7 +12,9 @@ export default function EmailPreview({ fecha }) {
     setLoading(true);
     setError('');
     try {
-      const res = await fetch(`${API_BASE}/email/preview?fecha=${fecha}&skill=In_Contingencias`);
+      const params = new URLSearchParams({ fecha });
+      (skills && skills.length ? skills : ['In_Contingencias']).forEach((s) => params.append('skills', s));
+      const res = await fetch(`${API_BASE}/email/preview?${params}`);
       if (!res.ok) throw new Error('No se pudo cargar la vista previa');
       setPreview(await res.json());
       setOpen(true);

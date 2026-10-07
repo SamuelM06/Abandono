@@ -8,7 +8,7 @@ from email import encoders
 from datetime import date, datetime
 from app.database import get_settings
 from app.excel_export import generate_daily_excel_report
-from app.services import get_kpis_for_date
+from app.services import get_kpis_for_date, normalize_skills
 
 
 LOGO_CID = "xuma_logo"
@@ -59,11 +59,13 @@ def _signature_html(settings) -> str:
     """
 
 
-def build_daily_report_context(target_date: date = None, skill: str = "In_Contingencias") -> dict:
+def build_daily_report_context(target_date: date = None, skills=None) -> dict:
     if target_date is None:
         target_date = date.today()
+    skills = normalize_skills(skills)
+    skill_label = ", ".join(skills)
     settings = get_settings()
-    kpis = get_kpis_for_date(target_date, skill)
+    kpis = get_kpis_for_date(target_date, skills)
     filename = f"Reporte Abandono {target_date.strftime('%Y-%m-%d')}.xlsx"
     subject = f"Reporte Diario Abandono Xuma - {target_date.strftime('%d/%m/%Y')}"
     total = kpis["total_ingresadas"] or 0
@@ -77,11 +79,11 @@ def build_daily_report_context(target_date: date = None, skill: str = "In_Contin
         <div style="background: #120180; color: white; padding: 22px; text-align: center; border-radius: 10px 10px 0 0;">
           <img src="cid:xuma_logo" alt="Xuma" style="height: 46px; margin-bottom: 10px;" />
           <h1 style="margin: 0; font-size: 22px;">Reporte diario de contingencia</h1>
-          <p style="margin: 8px 0 0; opacity: 0.9;">Skill {skill} | {target_date.strftime('%d/%m/%Y')}</p>
+          <p style="margin: 8px 0 0; opacity: 0.9;">Skill {skill_label} | {target_date.strftime('%d/%m/%Y')}</p>
         </div>
         <div style="background: #ffffff; padding: 22px; border-radius: 0 0 10px 10px; border: 1px solid #e0e0e0;">
           <p>Hola, buen dia.</p>
-          <p>Comparto el seguimiento del dia <strong>{target_date.strftime('%d/%m/%Y')}</strong> para la contingencia (skill <strong>{skill}</strong>), con corte de la tarde:</p>
+          <p>Comparto el seguimiento del dia <strong>{target_date.strftime('%d/%m/%Y')}</strong> para la contingencia (skill <strong>{skill_label}</strong>), con corte de la tarde:</p>
           <table style="width: 100%; border-collapse: collapse; margin: 16px 0;">
             <tr style="background: #120180; color: white;">
               <th style="padding: 10px; text-align: left;">Indicador</th>
@@ -104,7 +106,8 @@ def build_daily_report_context(target_date: date = None, skill: str = "In_Contin
     """
     return {
         "fecha": target_date.strftime("%Y-%m-%d"),
-        "skill": skill,
+        "skill": skill_label,
+        "skills": skills,
         "subject": subject,
         "to": settings.email_to_jefa,
         "cc": settings.email_to_coord,
@@ -116,7 +119,7 @@ def build_daily_report_context(target_date: date = None, skill: str = "In_Contin
     }
 
 
-def send_daily_report_email(target_date: date = None, skill: str = "In_Contingencias") -> bool:
+def send_daily_report_email(target_date: date = None, skills=None) -> bool:
     if target_date is None:
         target_date = date.today()
     settings = get_settings()
@@ -125,8 +128,8 @@ def send_daily_report_email(target_date: date = None, skill: str = "In_Contingen
         print("Configuracion de email incompleta, saltando envio")
         return False
     try:
-        ctx = build_daily_report_context(target_date, skill)
-        excel_bytes = generate_daily_excel_report(target_date, skill)
+        ctx = build_daily_report_context(target_date, skills)
+        excel_bytes = generate_daily_excel_report(target_date, ctx["skills"])
 
         msg = MIMEMultipart()
         msg["From"] = settings.email_from

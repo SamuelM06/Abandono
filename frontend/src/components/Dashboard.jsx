@@ -3,7 +3,6 @@ import KPICard from './KPICard';
 import HourlyChart from './HourlyChart';
 import TrendChart from './TrendChart';
 import FilterChips from './FilterChips';
-import ExportButton from './ExportButton';
 import EmailPreview from './EmailPreview';
 
 const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:8000/api';
@@ -45,7 +44,7 @@ const RefreshIcon = ({ spinning }) => (
   </svg>
 );
 
-export default function Dashboard({ onUpdate }) {
+export default function Dashboard({ onUpdate, skills }) {
   const [kpis, setKpis] = useState({
     total_ingresadas: 0,
     total_abandono: 0,
@@ -68,8 +67,9 @@ export default function Dashboard({ onUpdate }) {
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
-      // La fecha y el rango SIEMPRE salen de lo seleccionado en el front (nada hardcodeado).
+      // La fecha, el rango y las lineas SIEMPRE salen de lo seleccionado en el front.
       const params = new URLSearchParams({ fecha, time_range: timeRange });
+      skills.forEach((s) => params.append('skills', s));
 
       const [kpisRes, hourlyRes] = await Promise.all([
         fetch(`${API_BASE}/kpis?${params}`),
@@ -94,7 +94,7 @@ export default function Dashboard({ onUpdate }) {
       setLoading(false);
       setCountdown(REFRESH_SECONDS);
     }
-  }, [fecha, timeRange, onUpdate]);
+  }, [fecha, timeRange, skills, onUpdate]);
 
   useEffect(() => {
     fetchData();
@@ -124,7 +124,7 @@ export default function Dashboard({ onUpdate }) {
         <div>
           <h2 className="font-raleway font-bold text-xl text-xuma-gray dark:text-white">Dashboard Contingencia</h2>
           <p className="font-raleway text-sm text-gray-500 dark:text-slate-400 mt-0.5">
-            Skill: <span className="font-medium text-xuma-blue dark:text-xuma-green-light">In_Contingencias</span> | Fecha:{" "}
+            Skill: <span className="font-medium text-xuma-blue dark:text-xuma-green-light">{skills.join(' · ')}</span> | Fecha:{" "}
             <input
               type="date"
               value={fecha}
@@ -134,8 +134,7 @@ export default function Dashboard({ onUpdate }) {
           </p>
         </div>
         <div className="flex items-center gap-2 flex-wrap">
-          <ExportButton fecha={fecha} timeRange={timeRange} />
-          {isOwner && <EmailPreview fecha={fecha} />}
+          {isOwner && <EmailPreview fecha={fecha} skills={skills} />}
           <button
             onClick={fetchData}
             disabled={loading}

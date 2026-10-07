@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import Dashboard from './components/Dashboard';
 import DetailView from './components/DetailView';
+import SkillFilter from './components/SkillFilter';
 import './App.css';
 
 const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:8000/api';
@@ -11,6 +12,9 @@ function App() {
   const [isConnected, setIsConnected] = useState(true);
   // Tema oscuro por defecto
   const [theme, setTheme] = useState(() => localStorage.getItem('abandono-theme') || 'dark');
+  // Lineas seleccionadas: se comparte entre Dashboard y Detalle para no rehacer
+  // la seleccion al cambiar de vista.
+  const [skills, setSkills] = useState(['In_Contingencias']);
 
   useEffect(() => {
     document.documentElement.classList.toggle('dark', theme === 'dark');
@@ -33,7 +37,7 @@ function App() {
   }, [checkConnection]);
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-[#0b1020] font-raleway transition-colors">
+    <div className="min-h-screen flex flex-col bg-gray-50 dark:bg-[#0b1020] font-raleway transition-colors">
       <header className="bg-white dark:bg-[#0f1530] border-b border-gray-200 dark:border-slate-700 sticky top-0 z-50 transition-colors">
         <div className="max-w-[1500px] mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
@@ -110,11 +114,12 @@ function App() {
         </div>
       </header>
 
-      <main className="max-w-[1500px] mx-auto px-4 sm:px-6 lg:px-8 py-5">
+      <main className="flex-1 max-w-[1500px] w-full mx-auto px-4 sm:px-6 lg:px-8 py-5 space-y-4">
+        <SkillFilter selected={skills} onChange={setSkills} />
         {view === 'dashboard' && (
-          <Dashboard onUpdate={(time) => setLastUpdate(time)} />
+          <Dashboard skills={skills} onUpdate={(time) => setLastUpdate(time)} />
         )}
-        {view === 'detail' && <DetailView />}
+        {view === 'detail' && <DetailView skills={skills} />}
       </main>
 
       <footer className="bg-white dark:bg-[#0f1530] border-t border-gray-200 dark:border-slate-700 mt-auto transition-colors">

@@ -13,7 +13,7 @@ abandono_xuma/
 │   ├── Dockerfile
 │   └── .env.example       # PLANTILLA (sin datos reales)
 ├── frontend/              # React + Vite + Tailwind (Dashboard, Detalle, Export, Preview correo)
-│   ├── src/components/
+│   ├── src/components/  # Dashboard, Detalle, Export, Preview correo, filtro de lineas
 │   └── .env.example
 ├── context/
 │   ├── manual_marca/      # Manual de marca Xuma
@@ -28,8 +28,9 @@ abandono_xuma/
 ## KPIs y filtros
 
 - **Ingresadas / Abandono (`Abandoned`) / Atendidas (`Normal Clearing`)** del skill de contingencia.
-- Filtros por **fecha seleccionada** (nunca hardcodeada) y ventana: **Medio dia (8–12)**, **Dia completo (8–17:30)**, **Fuera de horario**.
-- Detalle en `context/docs/filtros_y_kpis.md`.
+- Filtros por **fecha seleccionada** (nunca hardcodeada) y ventana: **Todo el día (24 h)**, **Medio dia (8–12)**, **Dia completo (8–17:30)**, **Fuera de horario**.
+- **Filtro multi-selección de líneas** (Contingencia, Caribe, Surtigas, GDO, CEO y Manual competencia): se pueden marcar varias y ver el abandono del día en una sola vista.
+- Detalle por `context/docs/filtros_y_kpis.md`.
 
 ## Puesta en marcha (local)
 
@@ -54,6 +55,7 @@ npm run dev                            # http://localhost:5173
 ## Correo automatico 17:20 + vista previa
 
 - Scheduler diario 17:20 (America/Bogota) con Excel adjunto `Reporte Abandono AAAA-MM-DD.xlsx`.
+- **Exportar Excel** (reporte completo del filtro) y **Exportar Abandono** (los números sin atención a devolver: abandono, fuera de horario y queue time out, con su hora).
 - Destinatarias y firma de Outlook se configuran en el `.env` local (`EMAIL_TO_JEFA`, `EMAIL_TO_COORD`, `EMAIL_SIGNATURE_*`).
 - **Vista previa sin enviar:** boton "Vista previa correo" en el Dashboard o `GET /api/email/preview?fecha=AAAA-MM-DD`.
 - Detalle en `context/docs/correo_automatico.md` y operacion en `context/docs/operacion_diaria.md`.

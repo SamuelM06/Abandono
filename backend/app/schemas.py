@@ -8,6 +8,7 @@ class TimeRange(str, Enum):
     MEDIO_DIA = "medio_dia"
     DIA_COMPLETO = "dia_completo"
     FUERA_HORARIO = "fuera_horario"
+    TODO_DIA = "todo_dia"
 
 
 class KPIDashboard(BaseModel):
@@ -19,6 +20,18 @@ class KPIDashboard(BaseModel):
     fecha: str
     hora_actualizacion: str
     skill: str = "In_Contingencias"
+    skills: List[str] = Field(default_factory=list)
+
+
+class SkillOption(BaseModel):
+    skill: str
+    label: str
+    typecall: str
+    total_30d: int = 0
+
+
+class SkillCatalog(BaseModel):
+    skills: List[SkillOption] = Field(default_factory=list)
 
 
 class AsesorOption(BaseModel):
@@ -60,7 +73,13 @@ class ExportRequest(BaseModel):
     fecha_inicio: datetime
     fecha_fin: datetime
     skill: str = "In_Contingencias"
+    # Varias lineas a la vez; si viene vacio se usa `skill`.
+    skills: Optional[List[str]] = None
     time_range: Optional[TimeRange] = None
+    # Si viene, el Excel sale solo con esas filas (ej. 10164 = solo abandonos).
+    resultcall: Optional[str] = None
+    # Reporte de "sin atencion": abandono + queue time out + out of time IN.
+    solo_abandono: bool = False
 
 
 class EmailConfig(BaseModel):
@@ -78,10 +97,13 @@ TIME_RANGES = {
     TimeRange.DIA_COMPLETO: (time(8, 0), time(17, 30)),
     # Fuera de horario = antes de 8:00 o desde las 17:30 (se maneja con OR en services.build_time_filter)
     TimeRange.FUERA_HORARIO: (time(17, 30), time(8, 0)),
+    # Todo el dia = sin recorte horario (la fecha ya limita al dia seleccionado)
+    TimeRange.TODO_DIA: (time(0, 0), time(23, 59, 59)),
 }
 
 TIME_RANGE_LABELS = {
     TimeRange.MEDIO_DIA: "Medio dia (8:00 - 12:00)",
     TimeRange.DIA_COMPLETO: "Dia completo (8:00 - 17:30)",
     TimeRange.FUERA_HORARIO: "Fuera de horario (antes 8:00 / desde 17:30)",
+    TimeRange.TODO_DIA: "Todo el dia (24 horas)",
 }

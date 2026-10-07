@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import ExportButton from './ExportButton';
 import Pagination from './Pagination';
 
@@ -22,24 +22,31 @@ const TableIcon = () => (
   </svg>
 );
 
-export default function DetailView() {
+export default function DetailView({ skills }) {
   const [calls, setCalls] = useState([]);
   const [loading, setLoading] = useState(true);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
-  const [timeRange, setTimeRange] = useState('dia_completo');
+  const [timeRange, setTimeRange] = useState('todo_dia');
   const [fecha, setFecha] = useState(todayStr);
   const [sortConfig, setSortConfig] = useState({ key: 'fecha', direction: 'desc' });
   const [filters, setFilters] = useState({ agent: '', result: '' });
   const [options, setOptions] = useState({ asesores: [], resultados: [] });
 
-  // Items reales desde BD para los selects (se recargan con fecha/rango).
+  const linesActivas = useMemo(
+    () => (skills && skills.length ? skills : ['In_Contingencias']),
+    [skills]
+  );
+
+  // Items reales desde BD para los selects (se recargan con fecha/rango/lineas).
   useEffect(() => {
-    fetch(`${API_BASE}/filtros?fecha=${fecha}&time_range=${timeRange}&skill=In_Contingencias`)
+    const params = new URLSearchParams({ fecha, time_range: timeRange });
+    linesActivas.forEach((s) => params.append('skills', s));
+    fetch(`${API_BASE}/filtros?${params}`)
       .then((r) => r.json())
       .then((d) => setOptions({ asesores: d.asesores || [], resultados: d.resultados || [] }))
       .catch(() => setOptions({ asesores: [], resultados: [] }));
-  }, [fecha, timeRange]);
+  }, [fecha, timeRange, linesActivas]);
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -47,10 +54,10 @@ export default function DetailView() {
       const params = new URLSearchParams({
         fecha,
         time_range: timeRange,
-        skill: 'In_Contingencias',
         page: page.toString(),
         page_size: PAGE_SIZE.toString(),
       });
+      linesActivas.forEach((s) => params.append('skills', s));
 
       const response = await fetch(`${API_BASE}/calls?${params}`);
       if (!response.ok) throw new Error('Error al cargar datos');
@@ -63,7 +70,7 @@ export default function DetailView() {
     } finally {
       setLoading(false);
     }
-  }, [fecha, timeRange, page]);
+  }, [fecha, timeRange, page, linesActivas]);
 
   useEffect(() => {
     fetchData();
@@ -76,7 +83,7 @@ export default function DetailView() {
 
   const clearFilters = () => {
     setFecha(todayStr());
-    setTimeRange('dia_completo');
+    setTimeRange('todo_dia');
     setFilters({ agent: '', result: '' });
     setPage(1);
   };
@@ -89,7 +96,7 @@ export default function DetailView() {
     }
   })();
 
-  const hasActiveFilters = fecha !== todayStr() || timeRange !== 'dia_completo' || filters.agent || filters.result;
+  const hasActiveFilters = fecha !== todayStr() || timeRange !== 'todo_dia' || filters.agent || filters.result;
 
   const handleSort = (key) => {
     setSortConfig(prev => ({
@@ -114,6 +121,7 @@ export default function DetailView() {
   const formatNumber = (num) => new Intl.NumberFormat('es-CO').format(num);
 
   const getResultBadge = (call) => {
+    const detalle = (call.resultdesc || '').trim();
     if (call.resultcall === '10164') {
       return (
         <span className="badge-abandono">
@@ -123,6 +131,13 @@ export default function DetailView() {
           ABANDONO
         </span>
       );
+    }
+    // Llamo fuera de horario: nadie contesto, hay que devolver la llamada.
+    if (detalle === 'Out of Time IN') {
+      return <span className="badge-fuera-horario">FUERA DE HORARIO</span>;
+    }
+    if (call.resultcall === '10163') {
+      return <span className="badge-queue-timeout">QUEUE TIME OUT</span>;
     }
     if (call.resultcall === '16') {
       return (
@@ -155,10 +170,11 @@ export default function DetailView() {
         <div>
           <h2 className="font-raleway font-bold text-xl text-xuma-gray dark:text-white">Detalle de llamadas</h2>
           <p className="font-raleway text-sm text-gray-500 dark:text-slate-400 mt-0.5 capitalize">
-            {weekday} · Total: <span className="font-bold text-xuma-gray dark:text-white">{formatNumber(total)}</span> registros
+            {weekday} · {linesActivas.length} línea{linesActivas.length > 1 ? 's' : ''} · Total:{" "}
+            <span className="font-bold text-xuma-gray dark:text-white">{formatNumber(total)}</span> registros
           </p>
         </div>
-        <ExportButton fecha={fecha} timeRange={timeRange} />
+        <ExportButton fecha={fecha} timeRange={timeRange} skills={skills} />
       </div>
 
       <div className="card">
@@ -189,6 +205,7 @@ export default function DetailView() {
               onChange={(e) => { setTimeRange(e.target.value); setPage(1); }}
               className="select-field"
             >
+              <option value="todo_dia">Todo el día (00:00 - 23:59)</option>
               <option value="medio_dia">Medio día (8:00 - 12:00)</option>
               <option value="dia_completo">Día completo (8:00 - 17:30)</option>
               <option value="fuera_horario">Fuera de horario</option>
@@ -297,7 +314,16 @@ export default function DetailView() {
                 </tr>
               ) : (
                 filteredCalls.map((call) => (
-                  <tr key={call.idlog_calls} className={call.resultcall === '10164' ? 'bg-red-50 dark:bg-red-950/30' : ''}>
+                  <tr
+                    key={call.idlog_calls}
+                    className={
+                      call.resultcall === '10164'
+                        ? 'bg-red-50 dark:bg-red-950/30'
+                        : (call.resultdesc || '').trim() === 'Out of Time IN'
+                          ? 'bg-orange-50 dark:bg-orange-950/25'
+                          : ''
+                    }
+                  >
                     {columns.map((col) => (
                       <td key={col.key} className={`text-center !px-2 !py-2 !text-xs ${col.wrap ? 'whitespace-normal min-w-[140px]' : 'whitespace-nowrap'}`}>
                         {col.render(call)}
